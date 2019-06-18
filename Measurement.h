@@ -27,11 +27,13 @@ public:
     Measurement();
     virtual ~Measurement();
 
-    void start() = 0;   //method to start a measurement. Only call it, if
+    virtual void start() = 0;   
+                    //method to start a measurement. Only call it, if
                     //everything is set up (e.g. the correct wavelength
                     // is set at the monochromator).
     
-    bool isDone() = 0;  //measurements should stop by themselves.
+    virtual bool isDone() = 0;  
+                    //measurements should stop by themselves.
                     //with this method, you should be able to poll,
                     //if the Measurement is over (true) or still 
                     //running (false)
