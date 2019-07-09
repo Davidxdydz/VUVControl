@@ -1,4 +1,3 @@
-
 /*
  * Author: M Schwarz
  * Date: Tue 18 Jun 10:10:11 CEST 2019
@@ -20,7 +19,7 @@
 
 class Counting : public Measurement{
 public:
-    Conting();  //will likely get some initialization information
+    Counting();  //will likely get some initialization information
                 // like measuring time, ...
     virtual ~Counting();
 
