@@ -1,0 +1,6 @@
+
+
+#ignore all Object .o files:
+*.o
+
+
