@@ -1,6 +1,4 @@
 
 
-#ignore all Object .o files:
-*.o
-
-
+#ignore all Object vs code config files
+**/.vscode/
