@@ -13,7 +13,6 @@ restart thread on switch spectrometer
 limit for max plots
 estimated time remaining
 get single spectrum
-info integrated
 update graph when new
 tooltips
 

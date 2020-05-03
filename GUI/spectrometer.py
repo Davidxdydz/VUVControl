@@ -362,7 +362,8 @@ class Ui(QtWidgets.QMainWindow):
                 f"Averages:\t{tmp.average}\n\n"
                 f"Temperature\t{tmp.temperature}°C\n\n"
                 f"Start:\t\t{tmp.startTime}\n\n"
-                f"End:\t\t{tmp.endTime}"
+                f"End:\t\t{tmp.endTime}\n\n"
+                f"Integrated Intensity\t{tmp.integratedIntensity}\n\n"
                 )
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
@@ -623,6 +624,7 @@ class Measurement:
         self.average = average
         self.correctNonlinearity = correctNonlinearity
         self.correctDarkCounts = correctDarkCounts
+        self.integratedIntensity = 0
     
 
     @staticmethod
@@ -676,6 +678,7 @@ class Measurement:
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()
+        self.integratedIntensity = sum(self.intensities)
         statusLabel.setText("done!") #This is a slot, so it should be threadsafe
         self.completed = True
 
@@ -711,6 +714,7 @@ class MeasurementDummy(Measurement):
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()
+        self.integratedIntensity = sum(self.intensities)
         statusLabel.setText("done!")
         self.completed = True
 app = QApplication(sys.argv)
