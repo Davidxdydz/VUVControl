@@ -28,11 +28,12 @@ possible features:
 
 vacuum measure
 
+known bugs:
+motorcontrol log is not threadsafe, redirected to python print at the moment
 
 code:
 
 a lot of error handling (e.g. trys around every measurement to continue if one fails)
-!! thread safety, join to main thread after every measurement to display as the current setup can produce crashes
 split Ui into multiple classes for readability
 commenting
 

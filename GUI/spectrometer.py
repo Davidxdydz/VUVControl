@@ -1,4 +1,5 @@
-#minimum python 3.7
+#!/usr/local/bin/python3.7
+
 #pip3 install seabreeze
 #
 #pip3 install PyQt5
@@ -6,7 +7,7 @@
 #support: david.berger@tum.de
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QInputDialog, QCheckBox, QMessageBox,QFileDialog,QLineEdit, QComboBox, QPushButton, QLabel, QTextBrowser, QScrollBar, QApplication,QListWidget,QDoubleSpinBox,QSpinBox,QGroupBox,QVBoxLayout,QTabWidget
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings,pyqtSignal
 import sys
 import os
 import serial
@@ -64,8 +65,17 @@ result4 = spec.intensities()    #returns immediately
 =>result4 contains a spectrum of the last 05 seconds
 """
 
+#For debugging without access to spectrometer/motor
+#ALWAYS set to False before commiting
+motorDummy = True
+spectrometerDummy = True
 
 class Ui(QtWidgets.QMainWindow):
+
+    #signals
+    allMeasurementsComplete = pyqtSignal()
+    measurementComplete = pyqtSignal(object)
+
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi('mainWindow.ui', self)
@@ -150,7 +160,7 @@ class Ui(QtWidgets.QMainWindow):
         self.wavelengthShowSpinBox.valueChanged.connect(self.showWavelengthChanged)
         self.averageShowSpinBox.valueChanged.connect(self.showAverageChanged)
         self.integrationShowSpinBox.valueChanged.connect(self.showIntegrationChanged)
-        self.measurementList.currentRowChanged.connect(self.measurementChanged)
+        self.measurementList.itemSelectionChanged.connect(self.measurementChanged)
         self.resultsList.itemSelectionChanged.connect(self.resultChanged)
         self.removeButton.clicked.connect(self.removeMeasurement)
         self.comPortBox.currentIndexChanged.connect(self.comChanged)
@@ -163,6 +173,8 @@ class Ui(QtWidgets.QMainWindow):
         self.savePlotButton.clicked.connect(self.saveCurrentPlot)
         self.correctDarkCheckBox.stateChanged.connect(self.showElectricDarkChanged)
         self.correctNonlinearCheckBox.stateChanged.connect(self.showNonlinearityChanged)
+        self.measurementComplete.connect(self.onMeasurementComplete)
+        self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
         # setup functions
         self.refreshComports()
         self.refreshSpectrometers()
@@ -242,6 +254,8 @@ class Ui(QtWidgets.QMainWindow):
     def refreshComports(self):
         self.ports = serial.tools.list_ports.comports()
         self.comPortBox.addItems([port.device for port in self.ports])
+        if motorDummy:
+            self.motorControl = MotorControlDummy(self.comLogBrowser,0)
 
     def selectFolder(self):
         dialog = QFileDialog(self)
@@ -301,23 +315,25 @@ class Ui(QtWidgets.QMainWindow):
             QMessageBox.critical(self,"failed intitializing:",str(e))
 
     def addSingle(self):
-        self.pendingMeasurements.append(Measurement(self.integrationSpinBox.value(),self.fromSpinBox.value(),self.averageSpinBox.value()))
+        c = MeasurementDummy if spectrometerDummy else Measurement
+        self.pendingMeasurements.append(c(self.integrationSpinBox.value(),self.fromSpinBox.value(),self.averageSpinBox.value()))
         self.pendingMeasurements.sort(key=lambda x:x.wavelength)
         self.measurementList.clear()
         self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
     
     def addRange(self):
+        c = MeasurementDummy if spectrometerDummy else Measurement
         for x in np.arange(self.fromSpinBox.value(),self.toSpinBox.value()+self.stepSpinBox.value(),self.stepSpinBox.value()):
-            self.pendingMeasurements.append(Measurement(self.integrationSpinBox.value(),x,self.averageSpinBox.value()))
+            self.pendingMeasurements.append(c(self.integrationSpinBox.value(),x,self.averageSpinBox.value()))
         self.pendingMeasurements.sort(key= lambda x:x.wavelength)
         self.measurementList.clear()
         self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
     
     def removeMeasurement(self):
-        if self.currentMeasurement and self.measurementList.currentRow() >=0:
-            self.pendingMeasurements.remove(self.currentMeasurement)
-            self.measurementList.takeItem(self.measurementList.currentRow())
-            QApplication.processEvents()
+        currentRow= self.measurementList.currentRow()
+        if self.currentMeasurement and currentRow >=0:
+            self.measurementList.takeItem(currentRow)
+            self.pendingMeasurements.pop(currentRow)
 
     def showElectricDarkChanged(self,value):
         if self.currentMeasurement:
@@ -356,10 +372,12 @@ class Ui(QtWidgets.QMainWindow):
         for m in self.selectedResults:
             self.ax.plot(m.wavelengths,m.intensities,label=str(m.wavelength))
         self.ax.grid()
-        self.ax.legend()
+        if self.selectedResults:
+            self.ax.legend()
         self.ax.figure.canvas.draw()
     
-    def measurementChanged(self,currentRow):
+    def measurementChanged(self):
+        currentRow = self.measurementList.currentRow()
         if len(self.pendingMeasurements) > currentRow >= 0:
             self.currentMeasurement = self.pendingMeasurements[currentRow]
             self.averageShowSpinBox.setValue(self.currentMeasurement.average)
@@ -370,50 +388,45 @@ class Ui(QtWidgets.QMainWindow):
         else:
             self.currentMeasurement = None
 
+    def onMeasurementComplete(self,measurement):
+        self.measurementList.takeItem(0)
+        self.completedMeasurements.append(measurement)
+        self.resultsList.addItem(str(measurement))
+        if(self.saveCheckBox.checkState()!=0): #save this measurement if autosave checkbox is ticked
+            try:
+                filename = self.fileEdit.text()
+                directory = self.outputEdit.text()
+                filename = filename.replace("%wav",f"{measurement.wavelength:.1f}")
+                filename = filename.replace("%date",measurement.startTime.strftime("%d_%m_%Y"))
+                filename = filename.replace("%n",f"{self.measurementCount}")
+                filename = filename.replace("%time",measurement.startTime.strftime("%H-%M-%S"))
+                path = os.path.join(directory,filename)
+                dirname = os.path.dirname(path)
+                if not os.path.exists(dirname):
+                    os.mkdir(dirname)
+                print(f"saving to {path}")
+                measurement.save(path)
+            except Exception as e:
+                print("failed to save:" ,e)
+        self.measurementCount +=1
+
+    def onAllMeasurementsComplete(self):
+        self.measurementsGroupBox.setEnabled(True)
+        self.addGroupBox.setEnabled(True)
+        self.infoGroupBox.setEnabled(True)
+        self.startButton.setText("Start Measurement")
+
     def measureAll(self):
-        #TODO: error handling, thread safety
-        self.measurementsGroupBox.setEnabled(False)
-        self.addGroupBox.setEnabled(False)
-        self.infoGroupBox.setEnabled(False)
-        self.startButton.setText("Stop Measurement")
-        self.tabWidget.setCurrentIndex(1)
         while self.pendingMeasurements and not self.abortMeasurement:
             cur = self.pendingMeasurements.pop(0)
-            self.measurementList.takeItem(0)
-            QApplication.processEvents()
-
             try:
                 self.motorControl.goToWavelength(cur.wavelength)
                 cur.measure(self.spectrometer,self.statusLabel)
             except Exception as e:
                 print("Measurement failed:",e)
-            
             if cur.completed:
-                self.completedMeasurements.append(cur)
-                self.resultsList.addItem(str(cur))
-                QApplication.processEvents()
-                self.resultsList.setCurrentRow(len(self.completedMeasurements)-1) # not thread safe maybe?
-                if(self.saveCheckBox.checkState()!=0): #save this measurement if autosave checkbox is ticked
-                    print("saving")
-                    try:
-                        filename = self.fileEdit.text()
-                        directory = self.outputEdit.text()
-                        filename = filename.replace("%wav",f"{cur.wavelength:.1f}")
-                        filename = filename.replace("%date",cur.startTime.strftime("%d_%m_%Y"))
-                        filename = filename.replace("%n",f"{self.measurementCount}")
-                        filename = filename.replace("%time",cur.startTime.strftime("%H-%M-%S"))
-                        path = os.path.join(directory,filename)
-                        dirname = os.path.dirname(path)
-                        if not os.path.exists(dirname):
-                            os.mkdir(dirname)
-                        cur.save(path)
-                    except Exception as e:
-                        print("failed to save:" ,e)
-                self.measurementCount +=1
-        self.measurementsGroupBox.setEnabled(True)
-        self.addGroupBox.setEnabled(True)
-        self.infoGroupBox.setEnabled(True)
-        self.startButton.setText("Start Measurement")
+                self.measurementComplete.emit(cur)
+        self.allMeasurementsComplete.emit()
 
     def startMeasuring(self):
         if self.measurementThread and self.measurementThread.is_alive():
@@ -422,13 +435,18 @@ class Ui(QtWidgets.QMainWindow):
         if self.motorControl == None:
             QMessageBox.critical(self,"Can't Start","Motor control not connected!")
             return
-        if self.spectrometer == None:
+        if self.spectrometer == None and not spectrometerDummy:
             QMessageBox.critical(self,"Can't Start","Spectrometer not connected!")
             return
         if not self.pendingMeasurements:
             QMessageBox.information(self,"Can't Start","No measurements configured!")
             return
         self.abortMeasurement = False
+        self.measurementsGroupBox.setEnabled(False)
+        self.addGroupBox.setEnabled(False)
+        self.infoGroupBox.setEnabled(False)
+        self.startButton.setText("Stop Measurement")
+        self.tabWidget.setCurrentIndex(1)
         self.measurementThread = threading.Thread(target=self.measureAll, daemon=True)
         self.measurementThread.start()
         
@@ -455,7 +473,7 @@ class Ui(QtWidgets.QMainWindow):
     def loadSettings(self):
         portsNames = [port.device for  port in self.ports]
         desiredPort = self.settings.value("COMPort")
-        if desiredPort and desiredPort in portsNames:
+        if (desiredPort and desiredPort in portsNames):
             self.comPortBox.setCurrentText(desiredPort)
         self.loadSpinBox("from",self.fromSpinBox)
         self.loadSpinBox("to",self.toSpinBox)
@@ -527,9 +545,11 @@ class MotorControl:
         return int(response.lstrip("maximum set to "))
 
     def log(self, message):
-        self.logBrowser.append(str(message))
-        s = self.logBrowser.verticalScrollBar()
-        s.setValue(s.maximum())
+        print(message)
+        #NOT THREAD SAFE
+        #self.logBrowser.append(str(message))
+        #s = self.logBrowser.verticalScrollBar()
+        #s.setValue(s.maximum())
 
     def sendCommand(self,command,value = 0):
         self.ser.write(f"${command} {float(value)}".encode())
@@ -551,6 +571,44 @@ class MotorControl:
     def __del__(self):
         self.cleanup()
 
+#A dummy class to test when no motor is available
+#simulates time delay waiting for response
+#always returns no error on the motor part
+#does not simulate connection issues at the moment
+class MotorControlDummy(MotorControl):
+    def __init__(self,logBrowser,timescale = 1):
+        self.logBrowser = logBrowser
+        self.log("opened on DUMMYPORT")
+        self.timescale = timescale
+        self.delay(1)
+        self.log("connected and ready!")
+        self.is_open = True
+        self.commands = {"gtp":(1,"yey")}
+
+    def delay(self,duration):
+        time.sleep(duration*self.timescale)
+
+    def getResponse(self,command):
+        if command not in self.commands:
+            return "error"
+        self.delay(self.commands[command][0])
+        return self.commands[command][1]
+
+    def findMinimumPosition(self):
+        self.sendCommand("fmi",0)
+
+    def findMaximumPosition(self):
+        response = self.sendCommand("fma",0)
+        return int(response.lstrip("maximum set to "))
+
+
+    def sendCommand(self,command,value = 0):
+        self.log(f"Simulating:${command} {float(value)}")
+        return self.getResponse(command)
+    def cleanup(self):
+        pass
+    
+
 
 class Measurement:
     def __init__(self, integrationtime, wavelength, average=1,correctNonlinearity = True,correctDarkCounts = True):
@@ -566,8 +624,10 @@ class Measurement:
         self.correctNonlinearity = correctNonlinearity
         self.correctDarkCounts = correctDarkCounts
     
+
     @staticmethod
-    def dummy():
+    def completedDummy():
+        #For having a completed measurement to test plotting etc.
         res = Measurement(random()*10,random()*100+120,1)
         res.temperature = random()*40-20
         res.wavelengths = np.linspace(120,900,1000)
@@ -616,11 +676,12 @@ class Measurement:
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()
-        statusLabel.setText("done!")
+        statusLabel.setText("done!") #This is a slot, so it should be threadsafe
         self.completed = True
 
     def save(self,path):
-        header = f"Start Time: {self.startTime}\n"\
+        header = f"Wavelength (experimental): {self.wavelength}\n"\
+                 f"Start Time: {self.startTime}\n"\
                  f"End Time: {self.endTime}\n"\
                  f"Integration Time [s]: {self.integrationtime}\n"\
                  f"Scans to average: {self.average}\n"\
@@ -630,6 +691,28 @@ class Measurement:
         np.savetxt(path,np.array((self.wavelengths,self.intensities)).transpose(),fmt = "%.3f",header = header)
 
 
+class MeasurementDummy(Measurement):
+    def measure(self, spec,statusLabel):
+        self.wavelengths = np.linspace(120,900,1000)    
+        total = None
+        totaltemp = 0
+        self.startTime = datetime.now()
+        for x in range(self.average):
+            statusLabel.setText(f"Simulating:measuring {self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
+            QApplication.processEvents()
+            if x== 0:
+                #just random sines
+                time.sleep(self.integrationtime)
+                total = np.sin(self.wavelengths/(random()*50+10))
+            else:
+                time.sleep(self.integrationtime)
+                total += np.sin(self.wavelengths/(random()*50+10))
+            totaltemp += -25+random()*3
+        self.temperature = totaltemp/self.average
+        self.intensities = total/self.average
+        self.endTime = datetime.now()
+        statusLabel.setText("done!")
+        self.completed = True
 app = QApplication(sys.argv)
 window = Ui()
 app.aboutToQuit.connect(window.closing)
