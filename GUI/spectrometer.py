@@ -67,8 +67,8 @@ result4 = spec.intensities()    #returns immediately
 
 #For debugging without access to spectrometer/motor
 #ALWAYS set to False before commiting
-motorDummy = True
-spectrometerDummy = True
+motorDummy = False
+spectrometerDummy = False
 
 class Ui(QtWidgets.QMainWindow):
 
@@ -203,48 +203,22 @@ class Ui(QtWidgets.QMainWindow):
             QMessageBox.critical(self,"Motor control not connected","Please connect the motor control")
             return
         self.tabWidget.setEnabled(False)
-        QMessageBox.information(self,"Step 1","The motor will now drive to the lower end of its range and save that position. Prepare to read the wavelength when it has arrived. This will take some time, the application might be unresponsive.\nPress ok to start!")
-        self.motorControl.log("waiting for motor to arrive...")
-        QApplication.processEvents()
-        self.motorControl.findMinimumPosition()
-        self.miw = QInputDialog.getDouble(self, "The motor has arrived!","Current Wavelength (not grating)")[0]
-        print("miw",self.miw)
-        QMessageBox.information(self,"Step 2","The motor will now drive to the upper end of its range and save that position. Prepare to read the wavelength when it has arrived. This will take some time, the application might be unresponsive.\nPress ok to start!")
-        self.motorControl.log("waiting for motor to arrive...")
-        QApplication.processEvents()
-        self.map = self.motorControl.findMaximumPosition()
-        self.maw = QInputDialog.getDouble(self, "The motor has arrived","Current Wavelength (not grating)")[0]
-        print("maw",self.maw)
-        QMessageBox.information(self,"Done","The calibration is complete")
+        self.motorControl.calibrateRotation()
         self.tabWidget.setEnabled(True)
 
     def useSavedZero(self):
         if self.motorControl == None:
             QMessageBox.critical(self,"Motor control not connected","Please connect the motor control")
             return
-        if self.miw == None or self.maw ==None or self.map == None:
-            QMessageBox.critical(self,"Not calibrated","Please calibrate first")
-            return
-
-        QMessageBox.information(self,"Setup","The motor will drive to zero position.\npress ok to start")
         self.tabWidget.setEnabled(False)
-        self.motorControl.setWavelengthRange(self.miw,self.maw)
-        self.motorControl.setMaxPosition(self.map)
-        self.motorControl.findMinimumPosition()
-        QMessageBox.information(self,"Setup","done!")
+        self.motorControl.useSavedZero()
         self.tabWidget.setEnabled(True)
 
     def useSavedCurrent(self):
         if self.motorControl == None:
             QMessageBox.critical(self,"Motor control not connected","Please connect the motor control")
             return
-        if self.miw == None or self.maw ==None or self.map == None:
-            QMessageBox.critical(self,"Not calibrated","Please calibrate first")
-            return
-        self.motorControl.setWavelengthRange(self.miw,self.maw)
-        self.motorControl.setMaxPosition(self.map)
-        self.motorControl.setCurrentWavelength(QInputDialog.getDouble(self, "Setup","Current Wavelength (not grating)")[0])
-        QMessageBox.information(self,"Setup","done!")
+        self.motorControl.useSavedCurrent()
 
     def closing(self):
         self.saveSettings()
@@ -258,7 +232,7 @@ class Ui(QtWidgets.QMainWindow):
         self.ports = serial.tools.list_ports.comports()
         self.comPortBox.addItems([port.device for port in self.ports])
         if motorDummy:
-            self.motorControl = MotorControlDummy(self.comLogBrowser,0)
+            self.motorControl = MotorControlDummy(self,self.comLogBrowser,self.miw,self.maw,self.map,0)
 
     def selectFolder(self):
         dialog = QFileDialog(self)
@@ -324,7 +298,7 @@ class Ui(QtWidgets.QMainWindow):
             return
         self.currentPort = self.ports[self.comPortBox.currentIndex()]
         try:
-            self.motorControl = MotorControl(self.currentPort,self.comLogBrowser)
+            self.motorControl = MotorControl(self,self.currentPort,self.comLogBrowser,self.miw,self.maw,self.map)
         except Exception as e:
             QMessageBox.critical(self,"failed intitializing:",str(e))
 
@@ -355,18 +329,22 @@ class Ui(QtWidgets.QMainWindow):
     def showElectricDarkChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.correctDarkCounts = bool(value)
+
     def showNonlinearityChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.correctNonlinearity = bool(value)
+
     def showWavelengthChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.wavelength = value
             self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement.wavelength}nm")
         self.updateEstimatedTime()
+
     def showAverageChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.average = value
         self.updateEstimatedTime()
+
     def showIntegrationChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.integrationtime = value
@@ -481,12 +459,10 @@ class Ui(QtWidgets.QMainWindow):
         self.settings.setValue("filename",self.fileEdit.text())
         self.settings.setValue("autosave",self.saveCheckBox.checkState())
         self.settings.setValue("targetTemp",self.temperatureSpinBox.value())
-        if self.miw != None:
-            self.settings.setValue("miw",self.miw)
-        if self.maw != None:
-            self.settings.setValue("maw",self.maw)
-        if self.map != None:
-            self.settings.setValue("map",self.map)
+        if self.motorControl != None:
+            self.settings.setValue("miw",self.motorControl.miw)
+            self.settings.setValue("maw",self.motorControl.maw)
+            self.settings.setValue("map",self.motorControl.map)
         self.settings.sync()
     
     def loadSettings(self):
@@ -517,19 +493,25 @@ class Ui(QtWidgets.QMainWindow):
         tmp = self.settings.value(name)
         if tmp != None:
             widget.setValue(float(tmp))
+
     def loadText(self,name,widget):
         tmp = self.settings.value(name)
         if tmp != None:
             widget.setText(tmp)
+
     def loadCheckBox(self,name,widget):
         tmp = self.settings.value(name)
         if tmp!= None:
             widget.setCheckState(tmp)
 
 class MotorControl:
-    def __init__(self,port,logBrowser,timeout = 250):
+    def __init__(self,parent,port,logBrowser,miw,maw,map,timeout = 250):
         self.ser = serial.Serial(port.device, timeout=timeout)
         self.logBrowser = logBrowser
+        self.miw = miw
+        self.maw = maw
+        self.map = map
+        self.parent = parent
         if self.ser.is_open:
             self.log(f"opened on {self.ser.port}...")
             QApplication.processEvents()
@@ -543,6 +525,39 @@ class MotorControl:
             self.log("COM port can't be opened")
             raise Exception("COM port can't be opened")
         self.is_open = True
+
+    def calibrateRotation(self):
+        QMessageBox.information(self.parent,"Step 1","The motor will now drive to the lower end of its range and save that position. Prepare to read the wavelength when it has arrived. This will take some time, the application might be unresponsive.\nPress ok to start!")
+        self.log("waiting for motor to arrive...")
+        self.findMinimumPosition()
+        self.miw = QInputDialog.getDouble(self.parent, "The motor has arrived!","Current Wavelength (not grating)")[0]
+        print("miw",self.miw)
+        QMessageBox.information(self.parent,"Step 2","The motor will now drive to the upper end of its range and save that position. Prepare to read the wavelength when it has arrived. This will take some time, the application might be unresponsive.\nPress ok to start!")
+        self.log("waiting for motor to arrive...")
+        QApplication.processEvents()
+        self.map = self.findMaximumPosition()
+        self.maw = QInputDialog.getDouble(self.parent, "The motor has arrived","Current Wavelength (not grating)")[0]
+        print("maw",self.maw)
+        QMessageBox.information(self.parent,"Done","The calibration is complete")
+
+    def useSavedZero(self):
+        if self.miw == None or self.maw ==None or self.map == None:
+            QMessageBox.critical(self.parent,"Not calibrated","Please calibrate first")
+            return
+        QMessageBox.information(self.parent,"Setup","The motor will drive to zero position.\npress ok to start")
+        self.setWavelengthRange(self.miw,self.maw)
+        self.setMaxPosition(self.map)
+        self.findMinimumPosition()
+        QMessageBox.information(self.parent,"Setup","done!")
+
+    def useSavedCurrent(self):
+        if self.miw == None or self.maw ==None or self.map == None:
+            QMessageBox.critical(self.parent,"Not calibrated","Please calibrate first")
+            return
+        self.setWavelengthRange(self.miw,self.maw)
+        self.setMaxPosition(self.map)
+        self.setCurrentWavelength(QInputDialog.getDouble(self.parent, "Setup","Current Wavelength (not grating)")[0])
+        QMessageBox.information(self.parent,"Setup","done!")
 
     def getResponse(self):
         response = self.ser.readline().decode()
@@ -595,7 +610,7 @@ class MotorControl:
 #always returns no error on the motor part
 #does not simulate connection issues at the moment
 class MotorControlDummy(MotorControl):
-    def __init__(self,logBrowser,timescale = 1):
+    def __init__(self,parent,logBrowser,miw,maw,map,timescale = 1):
         self.logBrowser = logBrowser
         self.log("opened on DUMMYPORT")
         self.timescale = timescale
@@ -603,6 +618,10 @@ class MotorControlDummy(MotorControl):
         self.log("connected and ready!")
         self.is_open = True
         self.commands = {"gtp":(1,"yey")}
+        self.miw = miw
+        self.maw = maw
+        self.map = map
+        self.parent = parent
 
     def delay(self,duration):
         time.sleep(duration*self.timescale)
@@ -625,7 +644,7 @@ class MotorControlDummy(MotorControl):
         self.log(f"Simulating:${command} {float(value)}")
         return self.getResponse(command)
     def cleanup(self):
-        pass
+        return
     
 
 
@@ -678,7 +697,6 @@ class Measurement:
         # The intensities buffer would fill while the grating is moving, giving a fluorescence spectrum of mixed wavelengths
         spec.integration_time_micros(int(self.integrationtime*1_000_000)) #set next integration time
         spec.intensities()                                                #begin a new measurement with the desired integration time, dicard the values measured up to now
-        #spec.features['thermo_electric'][0].set_temperature_setpoint_degrees_celsius(-20)
     
         total = None
         totaltemp = 0

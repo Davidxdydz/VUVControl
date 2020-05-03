@@ -6,7 +6,6 @@ dark spectrum button
 refresh buttons @ spectrometer and comport
 reasonable min/max values at sliders
 dead pixels
-move miw maw map to motorcontrol
 restart thread on switch spectrometer
 limit for max plots
 get single spectrum
@@ -26,6 +25,7 @@ vacuum measure
 
 known bugs:
 motorcontrol log is not threadsafe, redirected to python print at the moment
+dismissing motor calibration popups breaks the calibration
 
 code:
 
