@@ -120,6 +120,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctDarkCheckBox = self.findChild(QCheckBox,'correctDarkCheckBox')
         self.correctNonlinearCheckBox = self.findChild(QCheckBox,'correctNonlinearCheckBox')
         self.estTimeLabel = self.findChild(QLabel,'estTimeLabel')
+        self.sortButton = self.findChild(QPushButton,'sortButton')
         #results page
         self.resultsList = self.findChild(QListWidget,'resultsList')
         self.plotLayout = self.findChild(QVBoxLayout,'plotLayout')
@@ -176,6 +177,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctNonlinearCheckBox.stateChanged.connect(self.showNonlinearityChanged)
         self.measurementComplete.connect(self.onMeasurementComplete)
         self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
+        self.sortButton.clicked.connect(self.sortPending)
         # setup functions
         self.refreshComports()
         self.refreshSpectrometers()
@@ -326,22 +328,22 @@ class Ui(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self,"failed intitializing:",str(e))
 
-    def addSingle(self):
-        c = MeasurementDummy if spectrometerDummy else Measurement
-        self.pendingMeasurements.append(c(self.integrationSpinBox.value(),self.fromSpinBox.value(),self.averageSpinBox.value()))
+    def sortPending(self):
         self.pendingMeasurements.sort(key=lambda x:x.wavelength)
         self.measurementList.clear()
         self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
         self.updateEstimatedTime()
+
+    def addSingle(self):
+        c = MeasurementDummy if spectrometerDummy else Measurement
+        self.pendingMeasurements.append(c(self.integrationSpinBox.value(),self.fromSpinBox.value(),self.averageSpinBox.value()))
+        self.sortPending()
     
     def addRange(self):
         c = MeasurementDummy if spectrometerDummy else Measurement
         for x in np.arange(self.fromSpinBox.value(),self.toSpinBox.value()+self.stepSpinBox.value(),self.stepSpinBox.value()):
             self.pendingMeasurements.append(c(self.integrationSpinBox.value(),x,self.averageSpinBox.value()))
-        self.pendingMeasurements.sort(key= lambda x:x.wavelength)
-        self.measurementList.clear()
-        self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
-        self.updateEstimatedTime()
+        self.sortPending()
     
     def removeMeasurement(self):
         currentRow= self.measurementList.currentRow()
@@ -359,6 +361,7 @@ class Ui(QtWidgets.QMainWindow):
     def showWavelengthChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.wavelength = value
+            self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement.wavelength}nm")
         self.updateEstimatedTime()
     def showAverageChanged(self,value):
         if self.currentMeasurement:
@@ -452,6 +455,11 @@ class Ui(QtWidgets.QMainWindow):
         if not self.pendingMeasurements:
             QMessageBox.information(self,"Can't Start","No measurements configured!")
             return
+        if self.pendingMeasurements != sorted(self.pendingMeasurements,key = lambda k:k.wavelength):
+            result = QMessageBox.question(self, "Confirm", "Start with unsorted measurements?",QMessageBox.Yes|QMessageBox.No)
+            if result == QMessageBox.No:
+                return
+        self.sortPending()
         self.abortMeasurement = False
         self.measurementsGroupBox.setEnabled(False)
         self.addGroupBox.setEnabled(False)
@@ -729,12 +737,12 @@ class MeasurementDummy(Measurement):
             if x== 0:
                 #just random sines
                 time.sleep(self.integrationtime)
-                total = np.sin(self.wavelengths/(random()*50+10))
+                total = random()*np.sin(self.wavelengths/(random()*50+10))
                 self.minTemp = temp
                 self.maxTemp = temp
             else:
                 time.sleep(self.integrationtime)
-                total += np.sin(self.wavelengths/(random()*50+10))
+                total += random()*np.sin(self.wavelengths/(random()*50+10))
                 if temp < self.minTemp:
                     self.minTemp = temp
                 if temp > self.maxTemp:
