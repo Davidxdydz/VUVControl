@@ -9,7 +9,6 @@ dead pixels
 move miw maw map to motorcontrol
 restart thread on switch spectrometer
 limit for max plots
-estimated time remaining
 get single spectrum
 update graph when new
 tooltips

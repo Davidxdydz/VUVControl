@@ -15,7 +15,7 @@ import serial.tools.list_ports
 import seabreeze
 import matplotlib.pyplot as plt
 from seabreeze.spectrometers import list_devices, Spectrometer
-from datetime import datetime
+from datetime import datetime,timedelta
 
 from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
 from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT as NavigationToolbar
@@ -119,6 +119,7 @@ class Ui(QtWidgets.QMainWindow):
         self.removeButton = self.findChild(QPushButton,'removeButton')
         self.correctDarkCheckBox = self.findChild(QCheckBox,'correctDarkCheckBox')
         self.correctNonlinearCheckBox = self.findChild(QCheckBox,'correctNonlinearCheckBox')
+        self.estTimeLabel = self.findChild(QLabel,'estTimeLabel')
         #results page
         self.resultsList = self.findChild(QListWidget,'resultsList')
         self.plotLayout = self.findChild(QVBoxLayout,'plotLayout')
@@ -262,6 +263,17 @@ class Ui(QtWidgets.QMainWindow):
         dialog.setFileMode(QFileDialog.Directory)
         if dialog.exec():
             self.outputEdit.setText(dialog.directory().absolutePath())
+    
+    def updateEstimatedTime(self):
+        seconds = 0
+        prev = None
+        for m in self.pendingMeasurements:
+            if prev != None:
+                seconds+=abs(prev.wavelength - m.wavelength)/2.5 #Motor does ~2.5nm/s
+            seconds+= m.integrationtime * m.average
+            prev = m
+        dt = timedelta(seconds = int(seconds))
+        self.estTimeLabel.setText(f"Estimated time: {dt}")
 
     def refreshSpectrometers(self):
         self.devices = list_devices()
@@ -320,6 +332,7 @@ class Ui(QtWidgets.QMainWindow):
         self.pendingMeasurements.sort(key=lambda x:x.wavelength)
         self.measurementList.clear()
         self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
+        self.updateEstimatedTime()
     
     def addRange(self):
         c = MeasurementDummy if spectrometerDummy else Measurement
@@ -328,12 +341,14 @@ class Ui(QtWidgets.QMainWindow):
         self.pendingMeasurements.sort(key= lambda x:x.wavelength)
         self.measurementList.clear()
         self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
+        self.updateEstimatedTime()
     
     def removeMeasurement(self):
         currentRow= self.measurementList.currentRow()
         if self.currentMeasurement and currentRow >=0:
             self.measurementList.takeItem(currentRow)
             self.pendingMeasurements.pop(currentRow)
+        self.updateEstimatedTime()
 
     def showElectricDarkChanged(self,value):
         if self.currentMeasurement:
@@ -344,12 +359,15 @@ class Ui(QtWidgets.QMainWindow):
     def showWavelengthChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.wavelength = value
+        self.updateEstimatedTime()
     def showAverageChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.average = value
+        self.updateEstimatedTime()
     def showIntegrationChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.integrationtime = value
+        self.updateEstimatedTime()
     
     def resultChanged(self):
         selectedIndices = self.resultsList.selectionModel().selectedIndexes()
