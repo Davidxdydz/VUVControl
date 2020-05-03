@@ -356,19 +356,11 @@ class Ui(QtWidgets.QMainWindow):
         self.selectedResults = [self.completedMeasurements[i.row()] for i in selectedIndices]
         if len(self.selectedResults)==1:
             tmp = self.selectedResults[0]
-            self.resultInfoLabel.setText(
-                f"Wavelength:\t{tmp.wavelength}nm\n\n"
-                f"Integration Time:\t{tmp.integrationtime}s\n\n"
-                f"Averages:\t{tmp.average}\n\n"
-                f"Temperature\t{tmp.temperature}°C\n\n"
-                f"Start:\t\t{tmp.startTime}\n\n"
-                f"End:\t\t{tmp.endTime}\n\n"
-                f"Integrated Intensity\t{tmp.integratedIntensity}\n\n"
-                )
+            self.resultInfoLabel.setText(tmp.getHeader()+f"\n\nTotal intensity\t\t\t{tmp.integratedIntensity:.2f}")
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
         self.ax.clear()
-        self.ax.set_ylabel("Count")
+        self.ax.set_ylabel("Intensity")
         self.ax.set_xlabel("Wavelength [nm]")
         for m in self.selectedResults:
             self.ax.plot(m.wavelengths,m.intensities,label=str(m.wavelength))
@@ -616,6 +608,8 @@ class Measurement:
         self.integrationtime = integrationtime  # in seconds
         self.wavelength = wavelength  # in nanometers
         self.temperature = None
+        self.minTemp = 0
+        self.maxTemp = 0
         self.wavelengths = None
         self.intensities = None
         self.completed = False
@@ -666,15 +660,21 @@ class Measurement:
         for x in range(self.average):
             statusLabel.setText(f"measuring {self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
             QApplication.processEvents()
+            temp = spec.features['thermo_electric'][0].read_temperature_degrees_celsius()
             if x== 0:
-                total = spec.intensities(
-                    correct_dark_counts=True, correct_nonlinearity=True)
+                total = spec.intensities(correct_dark_counts=True, correct_nonlinearity=True)
+                self.minTemp = temp
+                self.maxTemp = temp
             else:
                 if x == self.average-1:         # last spectrum
                     spec.integration_time_micros(spec.integration_time_micros_limits[0])  # set to the minimum while not measuring, applies after the next (and last) measurement
                 total += spec.intensities(correct_dark_counts=self.correctDarkCounts,
                                           correct_nonlinearity=self.correctNonlinearity)
-            totaltemp += spec.features['thermo_electric'][0].read_temperature_degrees_celsius()
+                if temp < self.minTemp:
+                    self.minTemp = temp
+                if temp > self.maxTemp:
+                    self.maxTemp = temp
+            totaltemp += temp
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()
@@ -682,15 +682,20 @@ class Measurement:
         statusLabel.setText("done!") #This is a slot, so it should be threadsafe
         self.completed = True
 
+    def getHeader(self):
+        return  \
+f"""Wavelength (experimental):\t\t{self.wavelength}nm
+Start Time:\t\t\t{self.startTime:%d.%m.%Y %H:%M:%S}
+End Time:\t\t\t\t{self.endTime:%d.%m.%Y %H:%M:%S}
+Integration Time:\t\t\t{self.integrationtime}s
+Scans to average:\t\t\t{self.average}
+Electric dark correction enabled:\t{self.correctDarkCounts}
+Nonlinearity correction enabled:\t{self.correctNonlinearity}
+Average temperature:\t\t{self.temperature:.1f}°C
+Temperature spread:\t\t{self.minTemp:.1f} to {self.maxTemp:.1f}°C"""
+
     def save(self,path):
-        header = f"Wavelength (experimental): {self.wavelength}\n"\
-                 f"Start Time: {self.startTime}\n"\
-                 f"End Time: {self.endTime}\n"\
-                 f"Integration Time [s]: {self.integrationtime}\n"\
-                 f"Scans to average: {self.average}\n"\
-                 f"Electric dark correction enabled: {self.correctDarkCounts}\n"\
-                 f"Nonlinearity correction enabled: {self.correctNonlinearity}\n"\
-                 f"Average temperature: {self.temperature}°C"
+        header = self.getHeader()
         np.savetxt(path,np.array((self.wavelengths,self.intensities)).transpose(),fmt = "%.3f",header = header)
 
 
@@ -702,15 +707,21 @@ class MeasurementDummy(Measurement):
         self.startTime = datetime.now()
         for x in range(self.average):
             statusLabel.setText(f"Simulating:measuring {self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
-            QApplication.processEvents()
+            temp = -25+random()*3
             if x== 0:
                 #just random sines
                 time.sleep(self.integrationtime)
                 total = np.sin(self.wavelengths/(random()*50+10))
+                self.minTemp = temp
+                self.maxTemp = temp
             else:
                 time.sleep(self.integrationtime)
                 total += np.sin(self.wavelengths/(random()*50+10))
-            totaltemp += -25+random()*3
+                if temp < self.minTemp:
+                    self.minTemp = temp
+                if temp > self.maxTemp:
+                    self.maxTemp = temp
+            totaltemp += temp
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()

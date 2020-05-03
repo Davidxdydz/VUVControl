@@ -3,10 +3,8 @@ Feel free to add any feature requests at the bottom of the document
 Features:
 
 dark spectrum button
-correct dark count/nonlinearity checkbox
 refresh buttons @ spectrometer and comport
 reasonable min/max values at sliders
-temp range in header
 dead pixels
 move miw maw map to motorcontrol
 restart thread on switch spectrometer
