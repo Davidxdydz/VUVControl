@@ -1,17 +1,19 @@
 Feel free to add any feature requests at the bottom of the document
 
-Features:
+Motor calibration is broken
+
+TODO:
+
 
 dark spectrum button
 refresh buttons @ spectrometer and comport
 reasonable min/max values at sliders
 dead pixels
 restart thread on switch spectrometer
-limit for max plots
 get single spectrum
 update graph when new
 tooltips
-
+lock offset
 
 User error check:
 
@@ -26,12 +28,15 @@ vacuum measure
 known bugs:
 motorcontrol log is not threadsafe, redirected to python print at the moment
 dismissing motor calibration popups breaks the calibration
+crash when closing, as spectrometer fails to report temperature
 
 code:
 
 split into multiple files
 split Ui into multiple classes for readability
 commenting
+refine calibration process to a single window instead of multiple popups
+rename button
 
 feature requests:
 

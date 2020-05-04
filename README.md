@@ -28,13 +28,13 @@ pyserial for commumication with the arduino
 pip install seabreeze
 seabreeze_os_setup
 pip install matplotlib
-pip install pyQt5
+pip install PyQt5
 pip install pyserial
 ```
 
 ## Running the GUI
 just launch spectrometer.py,
-or to get more error/debug messages open in terminal:
+or, to get more error/debug messages open in terminal:
 ```bash
 python spectrometer.py
 ```
