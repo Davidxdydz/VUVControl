@@ -30,7 +30,6 @@ vacuum measure
 known bugs:
 motorcontrol log is not threadsafe, redirected to python print at the moment
 dismissing motor calibration popups breaks the calibration
-crash when closing, as spectrometer fails to report temperature
 temperature does not get set (sometimes)
 
 code:

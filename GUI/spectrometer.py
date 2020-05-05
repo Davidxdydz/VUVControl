@@ -188,7 +188,7 @@ class Ui(QtWidgets.QMainWindow):
 
     def updateTemp(self):
         while True:
-            if self.spectrometer:
+            if self.spectrometer and self.spectrometer.is_open:
                 self.temperatureLabel.setText(f"{self.spectrometer.features['thermo_electric'][0].read_temperature_degrees_celsius()}°C")
             else:
                 self.temperatureLabel.setText("not connected")
