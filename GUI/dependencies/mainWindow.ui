@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>977</width>
-    <height>549</height>
+    <width>946</width>
+    <height>559</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,7 +60,7 @@
              <bool>true</bool>
             </property>
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -69,13 +69,39 @@
              <string>Add Measurement</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_7">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <property name="verticalSpacing">
+              <number>0</number>
+             </property>
              <item row="0" column="0">
               <layout class="QGridLayout" name="gridLayout_3">
+               <property name="sizeConstraint">
+                <enum>QLayout::SetDefaultConstraint</enum>
+               </property>
+               <property name="horizontalSpacing">
+                <number>9</number>
+               </property>
+               <property name="verticalSpacing">
+                <number>0</number>
+               </property>
                <item row="5" column="1">
                 <widget class="QPushButton" name="addSingleButton">
+                 <property name="toolTip">
+                  <string>Adds a single measurement at the &quot;from&quot; wavlength</string>
+                 </property>
                  <property name="text">
-                  <string>Add Single
-(at &quot;from&quot; wavelength)</string>
+                  <string>Add Single</string>
                  </property>
                 </widget>
                </item>
@@ -116,6 +142,12 @@
                 <widget class="QLabel" name="label_4">
                  <property name="text">
                   <string>from [nm]</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="indent">
+                  <number>-1</number>
                  </property>
                 </widget>
                </item>
@@ -209,6 +241,21 @@
              <string>Measurements</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_7">
+             <property name="spacing">
+              <number>9</number>
+             </property>
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <item>
               <widget class="QListWidget" name="measurementList">
                <property name="enabled">
@@ -237,6 +284,12 @@
              </item>
              <item>
               <widget class="QLabel" name="estTimeLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Estimated Time: 0</string>
                </property>
@@ -248,7 +301,7 @@
           <item row="0" column="2">
            <widget class="QGroupBox" name="infoGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -259,6 +312,9 @@
             <layout class="QGridLayout" name="gridLayout_8">
              <item row="0" column="0">
               <layout class="QGridLayout" name="gridLayout">
+               <property name="verticalSpacing">
+                <number>0</number>
+               </property>
                <item row="0" column="1">
                 <widget class="QDoubleSpinBox" name="wavelengthShowSpinBox">
                  <property name="accelerated">
@@ -351,14 +407,14 @@
             </layout>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QPushButton" name="startButton">
-            <property name="text">
-             <string>Start Measurement</string>
-            </property>
-           </widget>
-          </item>
          </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="startButton">
+          <property name="text">
+           <string>Start Measurement</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -428,69 +484,6 @@
         <string>Config</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_5">
-        <item row="0" column="0">
-         <widget class="QGroupBox" name="groupBox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="title">
-           <string>Output</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <layout class="QGridLayout" name="gridLayout_4">
-             <item row="0" column="2">
-              <widget class="QPushButton" name="browseButton">
-               <property name="text">
-                <string>Browse</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLineEdit" name="fileEdit"/>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLineEdit" name="outputEdit"/>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_9">
-               <property name="text">
-                <string>Folder</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_10">
-               <property name="text">
-                <string>Filename</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QCheckBox" name="saveCheckBox">
-               <property name="text">
-                <string>Autosave</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="label_11">
-               <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Filname replaces:&lt;/p&gt;&lt;p&gt;%wav, %date, %time, %n&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="textFormat">
-                <enum>Qt::AutoText</enum>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
         <item row="0" column="1">
          <widget class="QGroupBox" name="groupBox_3">
           <property name="title">
@@ -547,90 +540,156 @@
           </layout>
          </widget>
         </item>
-        <item row="1" column="0" colspan="2">
-         <widget class="QGroupBox" name="groupBox_4">
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupBox">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="title">
-           <string>Motor Control</string>
+           <string>Output</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_11">
-           <item row="0" column="0">
-            <layout class="QGridLayout" name="gridLayout_10">
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_14">
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <item row="0" column="2">
+              <widget class="QPushButton" name="browseButton">
                <property name="text">
-                <string>offset</string>
+                <string>Browse</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="outputEdit"/>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_9">
+               <property name="text">
+                <string>Folder</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>Filename</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="fileEdit"/>
+             </item>
+             <item row="3" column="0">
+              <widget class="QCheckBox" name="saveCheckBox">
+               <property name="text">
+                <string>Autosave</string>
                </property>
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QDoubleSpinBox" name="offsetSpinBox">
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="minimum">
-                <double>-1000.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>1000.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="0" colspan="3">
-              <widget class="QTextBrowser" name="comLogBrowser">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="2">
-              <widget class="QPushButton" name="useSavedCurrentButton">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
+              <widget class="QLabel" name="label_11">
                <property name="text">
-                <string>calibrate to current wavelength</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Filname replaces:&lt;/p&gt;&lt;p&gt;%wav, %date, %time, %n&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QPushButton" name="connectArduButton">
-               <property name="text">
-                <string>Connect</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="2">
-              <widget class="QComboBox" name="comPortBox">
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Serial Port to Arduino</string>
-               </property>
-               <property name="whatsThis">
-                <string/>
+               <property name="textFormat">
+                <enum>Qt::AutoText</enum>
                </property>
               </widget>
              </item>
             </layout>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_4">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Motor Control</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_11">
+              <item row="0" column="0">
+               <layout class="QGridLayout" name="gridLayout_10">
+                <item row="3" column="0">
+                 <widget class="QLabel" name="label_14">
+                  <property name="text">
+                   <string>offset</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QDoubleSpinBox" name="offsetSpinBox">
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-1000.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>1000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="0" colspan="3">
+                 <widget class="QTextBrowser" name="comLogBrowser">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2">
+                 <widget class="QPushButton" name="useSavedCurrentButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>calibrate to current wavelength</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QPushButton" name="connectArduButton">
+                  <property name="text">
+                   <string>Connect</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" colspan="2">
+                 <widget class="QComboBox" name="comPortBox">
+                  <property name="acceptDrops">
+                   <bool>false</bool>
+                  </property>
+                  <property name="toolTip">
+                   <string>Serial Port to Arduino</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </widget>
