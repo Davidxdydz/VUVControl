@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>977</width>
-    <height>572</height>
+    <height>549</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,7 +30,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_2">
        <property name="sizePolicy">
@@ -60,7 +60,7 @@
              <bool>true</bool>
             </property>
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -200,7 +200,7 @@
           <item row="0" column="1">
            <widget class="QGroupBox" name="measurementsGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -219,6 +219,12 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
                </property>
               </widget>
              </item>
@@ -242,7 +248,7 @@
           <item row="0" column="2">
            <widget class="QGroupBox" name="infoGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -485,53 +491,7 @@
           </layout>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QGroupBox" name="groupBox_4">
-          <property name="title">
-           <string>Grating Motor</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_11">
-           <item row="0" column="0">
-            <layout class="QGridLayout" name="gridLayout_10">
-             <item row="0" column="2" rowspan="3">
-              <widget class="QPushButton" name="useSavedCurrentButton">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>calibrate to current wavelength</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="offsetSpinBox">
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="minimum">
-                <double>-1000.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>1000.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_14">
-               <property name="text">
-                <string>offset</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="1" column="1">
+        <item row="0" column="1">
          <widget class="QGroupBox" name="groupBox_3">
           <property name="title">
            <string>Spectrometer</string>
@@ -587,34 +547,90 @@
           </layout>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QGroupBox" name="groupBox_2">
-          <property name="title">
-           <string>Arduino</string>
+        <item row="1" column="0" colspan="2">
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <layout class="QGridLayout" name="gridLayout_9">
-           <item row="1" column="1">
-            <widget class="QPushButton" name="connectArduButton">
-             <property name="text">
-              <string>Connect</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QComboBox" name="comPortBox">
-             <property name="acceptDrops">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Serial Port to Arduino</string>
-             </property>
-             <property name="whatsThis">
-              <string/>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="QTextBrowser" name="comLogBrowser"/>
+          <property name="title">
+           <string>Motor Control</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_11">
+           <item row="0" column="0">
+            <layout class="QGridLayout" name="gridLayout_10">
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_14">
+               <property name="text">
+                <string>offset</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QDoubleSpinBox" name="offsetSpinBox">
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="minimum">
+                <double>-1000.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="0" colspan="3">
+              <widget class="QTextBrowser" name="comLogBrowser">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QPushButton" name="useSavedCurrentButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>calibrate to current wavelength</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="connectArduButton">
+               <property name="text">
+                <string>Connect</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="2">
+              <widget class="QComboBox" name="comPortBox">
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Serial Port to Arduino</string>
+               </property>
+               <property name="whatsThis">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </widget>
