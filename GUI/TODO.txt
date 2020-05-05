@@ -4,13 +4,15 @@ Motor calibration is broken
 
 TODO:
 
-
+est time accessible
+no autosave popup
+get single spectrum
 dark spectrum button
+save all button
 refresh buttons @ spectrometer and comport
 reasonable min/max values at sliders
 dead pixels
 restart thread on switch spectrometer
-get single spectrum
 update graph when new
 tooltips
 lock offset
@@ -29,6 +31,7 @@ known bugs:
 motorcontrol log is not threadsafe, redirected to python print at the moment
 dismissing motor calibration popups breaks the calibration
 crash when closing, as spectrometer fails to report temperature
+temperature does not get set (sometimes)
 
 code:
 

@@ -67,7 +67,7 @@ result4 = spec.intensities()    #returns immediately
 
 #For debugging without access to spectrometer/motor
 #ALWAYS set to False before commiting
-motorDummy = False
+motorDummy = True
 spectrometerDummy = False
 
 class Ui(QtWidgets.QMainWindow):
@@ -150,6 +150,7 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementCount = 0
         self.selectedResults = []
         self.offset = None
+        self.estimatedGrating = None
 
         # event triggers
         self.connectArduButton.clicked.connect(self.connectArduino)
@@ -174,9 +175,9 @@ class Ui(QtWidgets.QMainWindow):
         self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
         self.sortButton.clicked.connect(self.sortPending)
         # setup functions
+        self.loadSettings()
         self.refreshComports()
         self.refreshSpectrometers()
-        self.loadSettings()
 
         # finally, run the application
         self.show()
@@ -211,7 +212,7 @@ class Ui(QtWidgets.QMainWindow):
         self.ports = serial.tools.list_ports.comports()
         self.comPortBox.addItems([port.device for port in self.ports])
         if motorDummy:
-            self.motorControl = MotorControlDummy(self,self.comLogBrowser,0)
+            self.motorControl = MotorControlDummy(self,self.comLogBrowser,self.estimatedGrating,0)
 
     def selectFolder(self):
         dialog = QFileDialog(self)
@@ -277,7 +278,7 @@ class Ui(QtWidgets.QMainWindow):
             return
         self.currentPort = self.ports[self.comPortBox.currentIndex()]
         try:
-            self.motorControl = MotorControl(self,self.currentPort,self.comLogBrowser)
+            self.motorControl = MotorControl(self,self.currentPort,self.comLogBrowser,self.estimatedGrating)
         except Exception as e:
             QMessageBox.critical(self,"failed intitializing:",str(e))
 
@@ -439,6 +440,7 @@ class Ui(QtWidgets.QMainWindow):
         self.settings.setValue("autosave",self.saveCheckBox.checkState())
         self.settings.setValue("targetTemp",self.temperatureSpinBox.value())
         self.settings.setValue("offset",self.offsetSpinBox.value())
+        self.settings.setValue("grating",self.motorControl.estimatedGrating)
         self.settings.sync()
     
     def loadSettings(self):
@@ -456,7 +458,7 @@ class Ui(QtWidgets.QMainWindow):
         self.loadText("dir",self.outputEdit)
         self.loadText("filename",self.fileEdit)
         self.loadCheckBox("autosave",self.saveCheckBox)
-    
+        self.estimatedGrating = int(self.settings.value("grating") if self.settings.value("grating") else 0)
     def loadFloat(self,name):
         tmp = self.settings.value(name)
         if tmp != None:
@@ -479,10 +481,11 @@ class Ui(QtWidgets.QMainWindow):
             widget.setCheckState(tmp)
 
 class MotorControl:
-    def __init__(self,parent,port,logBrowser,timeout = 250):
+    def __init__(self,parent,port,logBrowser,estimatedGrating,timeout = 250):
         self.ser = serial.Serial(port.device, timeout=timeout)
         self.logBrowser = logBrowser
         self.parent = parent
+        self.estimatedGrating = estimatedGrating
         if self.ser.is_open:
             self.log(f"opened on {self.ser.port}...")
             QApplication.processEvents()
@@ -502,9 +505,11 @@ class MotorControl:
         stepsPerRotation = 1600.0
         self.setWavelengthRange(100,600)
         self.setMaxPosition(500*stepsPerRotation/nmPerRotation)
-        n = QInputDialog.getInt(self.parent, "Setup","Input current grating")[0]
+        n = QInputDialog.getInt(self.parent, "Setup","Input current grating",self.estimatedGrating)[0]
         offset = self.parent.offsetSpinBox.value()
-        self.setCurrentWavelength(n/10+offset)
+        print(n/10.0+offset)
+        self.setCurrentWavelength(n/10.0+offset)
+        self.estimatedGrating = n
 
     def getResponse(self):
         response = self.ser.readline().decode()
@@ -533,11 +538,13 @@ class MotorControl:
         #s.setValue(s.maximum())
 
     def sendCommand(self,command,value = 0):
-        self.ser.write(f"${command} {float(value)}".encode())
+        self.ser.write(f"${command} {float(value):.2f}".encode())
         return self.getResponse()
 
     def goToWavelength(self,wavelength):
         self.sendCommand("gtw",wavelength)
+        offset = self.parent.offsetSpinBox.value()
+        self.estimatedGrating = int((wavelength-offset)*10)
 
     def setWavelengthRange(self,minlength,maxlength):
         self.sendCommand("miw",minlength)
@@ -557,7 +564,7 @@ class MotorControlDummy(MotorControl):
     #simulates time delay waiting for response
     #always returns no error on the motor part
     #does not simulate connection issues at the moment
-    def __init__(self,parent,logBrowser,timescale = 1):
+    def __init__(self,parent,logBrowser,estimatedGrating,timescale = 1):
         self.logBrowser = logBrowser
         self.log("opened on DUMMYPORT")
         self.timescale = timescale
@@ -566,6 +573,7 @@ class MotorControlDummy(MotorControl):
         self.is_open = True
         self.commands = {"gtp":(1,"yey")}
         self.parent = parent
+        self.estimatedGrating = estimatedGrating
 
     def delay(self,duration):
         time.sleep(duration*self.timescale)
@@ -669,7 +677,7 @@ class Measurement:
 
     def getHeader(self):
         return  \
-f"""Wavelength (experimental):\t\t{self.wavelength}nm
+f"""Wavelength:\t\t{self.wavelength}nm
 Start Time:\t\t\t{self.startTime:%d.%m.%Y %H:%M:%S}
 End Time:\t\t\t\t{self.endTime:%d.%m.%Y %H:%M:%S}
 Integration Time:\t\t\t{self.integrationtime}s
