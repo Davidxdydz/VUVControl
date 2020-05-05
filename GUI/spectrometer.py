@@ -79,6 +79,12 @@ class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi('dependencies/mainWindow.ui', self)
+        if "debug" in sys.argv:
+            global motorDummy
+            global spectrometerDummy
+            motorDummy = True
+            spectrometerDummy = True
+            print("Debug mode: spectrometer and motorcontrol dummies used.")
         # constants
         self.timeout = 5  # in seconds
 
