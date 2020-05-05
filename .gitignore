@@ -2,3 +2,4 @@
 
 #ignore all Object vs code config files
 **/.vscode/
+**/__pycache__/

@@ -485,7 +485,7 @@ class Ui(QtWidgets.QMainWindow):
     def loadCheckBox(self,name,widget):
         tmp = self.settings.value(name)
         if tmp!= None:
-            widget.setCheckState(tmp)
+            widget.setCheckState(int(tmp))
         
 app = QApplication(sys.argv)
 window = Ui()
