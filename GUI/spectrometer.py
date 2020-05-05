@@ -147,6 +147,7 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementThread = None
         self.abortMeasurement = False
         self.updateTempThread = None
+        self.abortTempThread = False
         self.measurementCount = 0
         self.selectedResults = []
         self.offset = None
@@ -187,12 +188,15 @@ class Ui(QtWidgets.QMainWindow):
             self.spectrometer.features['thermo_electric'][0].set_temperature_setpoint_degrees_celsius(value)
 
     def updateTemp(self):
-        while True:
-            if self.spectrometer and self.spectrometer.is_open:
-                self.temperatureLabel.setText(f"{self.spectrometer.features['thermo_electric'][0].read_temperature_degrees_celsius()}°C")
-            else:
-                self.temperatureLabel.setText("not connected")
-            time.sleep(1)
+        while not self.abortTempThread:
+            try:
+                if self.spectrometer:
+                    self.temperatureLabel.setText(f"{self.spectrometer.features['thermo_electric'][0].read_temperature_degrees_celsius()}°C")
+                else:
+                    self.temperatureLabel.setText("not connected")
+                time.sleep(1)
+            except Exception as e:
+                print(e)
 
     def useSavedCurrent(self):
         if self.motorControl == None:
@@ -248,6 +252,7 @@ class Ui(QtWidgets.QMainWindow):
                 f"Integration Time\t{it[0]/1000000}s-{it[1]/1000000}s"
             )
             self.updateTempThread = threading.Thread(target=self.updateTemp, daemon=True)
+            self.abortTempThread = False
             self.updateTempThread.start()
 
     def saveCurrentMeasurement(self):
@@ -264,6 +269,7 @@ class Ui(QtWidgets.QMainWindow):
             self.ax.figure.savefig(filename)
 
     def cleanupSpectrometer(self):
+        self.abortTempThread = True
         if self.currentDevice and self.currentDevice.is_open:
             self.spectrometer.close()
         #TODO: cleanup temperature thread 
@@ -440,7 +446,8 @@ class Ui(QtWidgets.QMainWindow):
         self.settings.setValue("autosave",self.saveCheckBox.checkState())
         self.settings.setValue("targetTemp",self.temperatureSpinBox.value())
         self.settings.setValue("offset",self.offsetSpinBox.value())
-        self.settings.setValue("grating",self.motorControl.estimatedGrating)
+        if self.motorControl != None:
+            self.settings.setValue("grating",self.motorControl.estimatedGrating)
         self.settings.sync()
     
     def loadSettings(self):
