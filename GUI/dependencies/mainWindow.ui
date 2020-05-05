@@ -425,30 +425,75 @@
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
          <layout class="QGridLayout" name="gridLayout_6">
-          <item row="1" column="0">
-           <widget class="QLabel" name="resultInfoLabel">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+          <item row="0" column="2" rowspan="2" colspan="2">
+           <widget class="QTabWidget" name="tabWidget_2">
+            <property name="currentIndex">
+             <number>0</number>
             </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QListWidget" name="resultsList">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="selectionMode">
-             <enum>QAbstractItemView::ExtendedSelection</enum>
-            </property>
+            <widget class="QWidget" name="tab_3">
+             <attribute name="title">
+              <string>Simple Plot</string>
+             </attribute>
+             <layout class="QGridLayout" name="gridLayout_9">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <layout class="QVBoxLayout" name="plotLayout"/>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_5">
+             <attribute name="title">
+              <string>Integrated Plot</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_5">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="integratedPlotLayout"/>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_4">
+             <attribute name="title">
+              <string>Info</string>
+             </attribute>
+             <layout class="QGridLayout" name="gridLayout_13">
+              <item row="0" column="0">
+               <widget class="QLabel" name="resultInfoLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </item>
           <item row="2" column="3">
@@ -465,13 +510,29 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="2" rowspan="2" colspan="2">
-           <layout class="QVBoxLayout" name="plotLayout"/>
-          </item>
-          <item row="2" column="0">
+          <item row="2" column="1">
            <widget class="QLabel" name="statusLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QListWidget" name="resultsList">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
             </property>
            </widget>
           </item>

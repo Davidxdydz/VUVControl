@@ -67,8 +67,8 @@ result4 = spec.intensities()    #returns immediately
 
 #For debugging without access to spectrometer/motor
 #ALWAYS set to False before commiting
-motorDummy = False
-spectrometerDummy = False
+motorDummy = True
+spectrometerDummy = True
 
 class Ui(QtWidgets.QMainWindow):
 
@@ -123,11 +123,15 @@ class Ui(QtWidgets.QMainWindow):
         #results page
         self.resultsList = self.findChild(QListWidget,'resultsList')
         self.plotLayout = self.findChild(QVBoxLayout,'plotLayout')
+        self.integratedPlotLayout = self.findChild(QVBoxLayout,'integratedPlotLayout')
         self.resultInfoLabel = self.findChild(QLabel,'resultInfoLabel')
         self.statusLabel = self.findChild(QLabel,'statusLabel')
-        self.canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        self.plotLayout.addWidget(self.canvas)
-        self.ax = self.canvas.figure.subplots()
+        self.simplePlotCanvas = FigureCanvas(Figure())
+        self.integratedPlotCanvas = FigureCanvas(Figure())
+        self.plotLayout.addWidget(self.simplePlotCanvas)
+        self.integratedPlotLayout.addWidget(self.integratedPlotCanvas)
+        self.simplePlotAx = self.simplePlotCanvas.figure.subplots()
+        self.integratedPlotAx = self.integratedPlotCanvas.figure.subplots()
         self.saveMeasurementButton = self.findChild(QPushButton,'saveMeasurementButton')
         self.savePlotButton = self.findChild(QPushButton,'savePlotButton')
         #settings
@@ -266,7 +270,7 @@ class Ui(QtWidgets.QMainWindow):
     def saveCurrentPlot(self):
         filename = QFileDialog.getSaveFileName(self,"Save","","picture (*.png")[0]
         if filename:
-            self.ax.figure.savefig(filename)
+            self.simplePlotAx.figure.savefig(filename)
 
     def cleanupSpectrometer(self):
         self.abortTempThread = True
@@ -344,15 +348,24 @@ class Ui(QtWidgets.QMainWindow):
             self.resultInfoLabel.setText(tmp.getHeader()+f"\n\nTotal intensity\t\t\t{tmp.integratedIntensity:.2f}")
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
-        self.ax.clear()
-        self.ax.set_ylabel("Intensity")
-        self.ax.set_xlabel("Wavelength [nm]")
+        self.simplePlotAx.clear()
+        self.simplePlotAx.set_ylabel("Intensity")
+        self.simplePlotAx.set_xlabel("Wavelength [nm]")
+        self.integratedPlotAx.clear()
+        self.integratedPlotAx.set_ylabel("Integrated Intensity")
+        self.integratedPlotAx.set_xlabel("Wavelength [nm]")
+        tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults]
+        if tmp:
+            tmp = np.array(sorted(tmp,key= lambda k:k[0]))
+            self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
         for m in self.selectedResults:
-            self.ax.plot(m.wavelengths,m.intensities,label=str(m.wavelength))
-        self.ax.grid()
+            self.simplePlotAx.plot(m.wavelengths,m.intensities,label=str(m.wavelength))
+        self.simplePlotAx.grid()
+        self.integratedPlotAx.grid()
         if self.selectedResults:
-            self.ax.legend()
-        self.ax.figure.canvas.draw()
+            self.simplePlotAx.legend()
+        self.simplePlotAx.figure.canvas.draw()
+        self.integratedPlotAx.figure.canvas.draw()
     
     def measurementChanged(self):
         currentRow = self.measurementList.currentRow()

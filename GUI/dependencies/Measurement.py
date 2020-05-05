@@ -87,9 +87,9 @@ class Measurement:
 
     def getHeader(self):
         return  \
-f"""Wavelength:\t\t{self.wavelength}nm
+f"""Wavelength:\t\t\t{self.wavelength}nm
 Start Time:\t\t\t{self.startTime:%d.%m.%Y %H:%M:%S}
-End Time:\t\t\t\t{self.endTime:%d.%m.%Y %H:%M:%S}
+End Time:\t\t\t{self.endTime:%d.%m.%Y %H:%M:%S}
 Integration Time:\t\t\t{self.integrationtime}s
 Scans to average:\t\t\t{self.average}
 Electric dark correction enabled:\t{self.correctDarkCounts}
