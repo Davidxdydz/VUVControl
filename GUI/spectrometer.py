@@ -67,8 +67,8 @@ result4 = spec.intensities()    #returns immediately
 
 #For debugging without access to spectrometer/motor
 #ALWAYS set to False before commiting
-motorDummy = False
-spectrometerDummy = False
+motorDummy = True
+spectrometerDummy = True
 
 class Ui(QtWidgets.QMainWindow):
 

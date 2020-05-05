@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>977</width>
-    <height>573</height>
+    <height>572</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,7 +30,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_2">
        <property name="sizePolicy">
@@ -88,7 +88,7 @@
                   <double>1.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>100.000000000000000</double>
+                  <double>200.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -125,10 +125,10 @@
                   <number>1</number>
                  </property>
                  <property name="minimum">
-                  <double>0.000000000000000</double>
+                  <double>50.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>600.000000000000000</double>
+                  <double>550.000000000000000</double>
                  </property>
                  <property name="value">
                   <double>125.000000000000000</double>
@@ -141,10 +141,10 @@
                   <number>1</number>
                  </property>
                  <property name="minimum">
-                  <double>0.000000000000000</double>
+                  <double>50.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>600.000000000000000</double>
+                  <double>550.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -181,6 +181,9 @@
                </item>
                <item row="4" column="1">
                 <widget class="QDoubleSpinBox" name="integrationSpinBox">
+                 <property name="minimum">
+                  <double>0.010000000000000</double>
+                 </property>
                  <property name="maximum">
                   <double>1600.000000000000000</double>
                  </property>
@@ -259,10 +262,10 @@
                   <number>1</number>
                  </property>
                  <property name="minimum">
-                  <double>0.000000000000000</double>
+                  <double>50.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>600.000000000000000</double>
+                  <double>550.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -289,13 +292,23 @@
                </item>
                <item row="2" column="1">
                 <widget class="QDoubleSpinBox" name="integrationShowSpinBox">
+                 <property name="minimum">
+                  <double>0.010000000000000</double>
+                 </property>
                  <property name="maximum">
                   <double>1600.000000000000000</double>
                  </property>
                 </widget>
                </item>
                <item row="1" column="1">
-                <widget class="QSpinBox" name="averageShowSpinBox"/>
+                <widget class="QSpinBox" name="averageShowSpinBox">
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>100</number>
+                 </property>
+                </widget>
                </item>
                <item row="1" column="0">
                 <widget class="QLabel" name="label_2">
@@ -530,7 +543,10 @@
               <number>1</number>
              </property>
              <property name="minimum">
-              <double>-100.000000000000000</double>
+              <double>-30.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>30.000000000000000</double>
              </property>
              <property name="value">
               <double>-25.000000000000000</double>

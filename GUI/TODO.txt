@@ -4,13 +4,12 @@ Motor calibration is broken
 
 TODO:
 
+offset and grating in header/ filename
+refresh buttons @ spectrometer and comport
 est time accessible
 no autosave popup
 get single spectrum
-dark spectrum button
 save all button
-refresh buttons @ spectrometer and comport
-reasonable min/max values at sliders
 dead pixels
 restart thread on switch spectrometer
 update graph when new
@@ -34,11 +33,8 @@ temperature does not get set (sometimes)
 
 code:
 
-split into multiple files
-split Ui into multiple classes for readability
 commenting
-refine calibration process to a single window instead of multiple popups
-rename button
+rename buttons
 
 feature requests:
 
