@@ -1,7 +1,5 @@
 Feel free to add any feature requests at the bottom of the document
 
-Motor calibration is broken
-
 TODO:
 
 offset and grating in header/ filename
