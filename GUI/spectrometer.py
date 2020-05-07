@@ -65,8 +65,6 @@ result4 = spec.intensities()    #returns immediately
 =>result4 contains a spectrum of the last 05 seconds
 """
 
-#For debugging without access to spectrometer/motor
-#ALWAYS set to False before commiting
 motorDummy = False
 spectrometerDummy = False
 
@@ -82,7 +80,7 @@ class Ui(QtWidgets.QMainWindow):
         if "debug" in sys.argv:
             global motorDummy
             global spectrometerDummy
-            motorDummy = True
+            motorDummy = False
             spectrometerDummy = True
             print("Debug mode: spectrometer and motorcontrol dummies used.")
         # constants

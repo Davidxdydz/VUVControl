@@ -3,8 +3,6 @@
 
 //ints on arduino are 16 bits, which overflow on large movements... --> longs
 
-//New version, less functions but way easier setup now that the motor calibration process is fixed
-
 /*
 This is just the stepper control, operated over serial messages:
 every message has to start with "$", followed by a three character
@@ -13,7 +11,18 @@ every function returns a status message over serial, ending with \r\n.
 If an error occured, the message will start with "error".
 
 
-caw         set current wavelength, position is now zero
+
+rst         reset the program
+
+mip         set minimum position
+map         set maximum position
+max         set maximum position to current
+miw         set minimum wavelength
+maw         set maximum wavelength
+caw         set current wavelength
+
+fmi         find and set minimum position using the switches
+fma         find and set maximum position using the switches
 
 gtp         go to position
 gtw         go to wavelength
@@ -43,16 +52,19 @@ enum ERROR
 {
   LowerEndStop = -1,
   UpperEndStop = 1,
-  zeroWavelengthNotSet = 2
+  PositionRangeNotSet = 2,
+  zeroWavelengthNotSet = 3,
+  PositionOutOfRange = 4
 };
 const int baudrate = 9600;
 const long stepsPerRotation = 1600;
-const float nmPerRotation = 2;
 long a[255];
 char buffer[3];
 const long moveDelay = 500; //move interval in microseconds
 long currentPosition = -1;
-float zeroWavelength = -10000;
+long maxPosition = -1;    //no minPosition required, 0 gets set as min
+float minWavelength = -10000; //in nanometer
+float maxWavelength = -10000;
 
 void setup()
 {
@@ -93,13 +105,28 @@ int performStep(char direction)
   return 0;
 }
 
+void findMinimum()
+{
+  while (!performStep(LOW))
+  {
+  }
+  currentPosition = 0;
+}
+
+void findMaximum()
+{
+  while (!performStep(HIGH))
+  {
+  }
+  maxPosition = currentPosition;
+}
 long wavelength2Position(float wavelength)
 {
-  return (float)(wavelength-zeroWavelength)/(float)nmPerRotation*stepsPerRotation;
+  return (wavelength - minWavelength) / (maxWavelength - minWavelength) * (float)maxPosition;
 }
 float position2Wavelength(long position)
 {
-  return position/(float)stepsPerRotation*(float)nmPerRotation + zeroWavelength;
+  return (float)currentPosition / (float)maxPosition * (maxWavelength - minWavelength) + minWavelength;
 }
 
 //rotates by angle in degrees
@@ -121,6 +148,16 @@ int rotate(float angle)
 //throws an error if range not set or out of range
 int goToPosition(long position)
 {
+  if (maxPosition < 0 || currentPosition < 0)
+  {
+    return ERROR::PositionRangeNotSet;
+  }
+
+  if (position > maxPosition || position < 0)
+  {
+    return ERROR::PositionOutOfRange;
+  }
+
   //set Direction
   char direction = position>currentPosition;
 
@@ -135,9 +172,10 @@ int goToPosition(long position)
 }
 int goToWavelength(float wavelength)
 {
-    if(zeroWavelength< -1000){
-        return ERROR::zeroWavelengthNotSet;
-    }
+  if (maxWavelength < -1000 || minWavelength < -1000)
+  {
+    return ERROR::zeroWavelengthNotSet;
+  }
   return goToPosition(wavelength2Position(wavelength));
 }
 
@@ -160,9 +198,13 @@ void interpretMessage()
   }
   if (instruction == "caw")
   {
-        currentPosition = 0;
-        zeroWavelength = value;
+      if(maxPosition<0||minWavelength<-1000||maxWavelength<-1000)
+      {
+        response = "error: can't set current wavelength if ranges are not set";
+      }else{
+        currentPosition = wavelength2Position(value);
         response = "current position set to " + String(currentPosition) +"=" + String(position2Wavelength(currentPosition))+"nm";
+      }
   }
   if (instruction == "gtp") //go to position
   {
@@ -170,6 +212,14 @@ void interpretMessage()
     if (r == 0)
     {
       response = "position: " + String(currentPosition);
+    }
+    if (r == ERROR::PositionOutOfRange)
+    { //out of range
+      response = "error: measurement position out of range, min is 0 and max is " + String(maxPosition);
+    }
+    if (r == ERROR::PositionRangeNotSet)
+    { //range not set correctly
+      response = "error: range not set";
     }
     if (r == ERROR::LowerEndStop || r == ERROR::UpperEndStop)
     {
@@ -184,6 +234,10 @@ void interpretMessage()
     { //it worked!
       response = "wavelength [nm]: " + String(position2Wavelength(currentPosition));
     }
+    if (r == ERROR::PositionOutOfRange)
+    { //out of range
+      response = "error: wavelength out of range, min is " + String(minWavelength) + " and max is " + String(maxWavelength);
+    }
     if (r == ERROR::zeroWavelengthNotSet)
     { //range not set correctly
       response = "error: range not set";
@@ -193,6 +247,41 @@ void interpretMessage()
       //aborted due to failsafe switches
       response = "error: failsafe triggered";
     }
+  }
+  if (instruction == "mac")
+  { //set maximum position
+    maxPosition = currentPosition;
+    response = "maximum position set to " + String(currentPosition);
+  }
+  if (instruction == "mip")
+  { //set minimum position
+    currentPosition = (long)value;
+    response = "minimum position set to " + String(value);
+  }
+  if (instruction == "map")
+  { //set maximum position
+    maxPosition = (long)value;
+    response = "maximum position set to " + String(value);
+  }
+  if (instruction == "miw")
+  { //set minimum wavelength
+    minWavelength = value;
+    response = "minimum Wavelength set to " + String(value);
+  }
+  if (instruction == "maw")
+  { //set maximum wavelength
+    maxWavelength = value;
+    response = "maximum Wavelength set to " + String(value);
+  }
+  if (instruction == "fmi")
+  {
+    findMinimum();
+    response = "minimum set";
+  }
+  if (instruction == "fma")
+  {
+    findMaximum();
+    response = "maximum set to " + String(maxPosition);
   }
   if (instruction == "rot")
   {

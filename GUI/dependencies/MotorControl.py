@@ -22,10 +22,6 @@ class MotorControl:
         self.is_open = True
 
     def manualCalibration(self):
-        nmPerRotation = 2.0
-        stepsPerRotation = 1600.0
-        self.setWavelengthRange(100,600)
-        self.setMaxPosition(500*stepsPerRotation/nmPerRotation)
         n = QInputDialog.getInt(self.parent, "Setup","Input current grating",self.estimatedGrating)[0]
         offset = self.parent.offsetSpinBox.value()
         print(n/10.0+offset)
@@ -44,13 +40,6 @@ class MotorControl:
             raise Exception("Motor does not respond")
         return response
 
-    def findMinimumPosition(self):
-        self.sendCommand("fmi",0)
-
-    def findMaximumPosition(self):
-        response = self.sendCommand("fma",0)
-        return int(response.lstrip("maximum set to "))
-
     def log(self, message):
         print(message)
         #NOT THREAD SAFE
@@ -67,11 +56,6 @@ class MotorControl:
         offset = self.parent.offsetSpinBox.value()
         self.estimatedGrating = int((wavelength-offset)*10)
 
-    def setWavelengthRange(self,minlength,maxlength):
-        self.sendCommand("miw",minlength)
-        self.sendCommand("maw",maxlength)
-    def setMaxPosition(self,position):
-        self.sendCommand("map",position)
     def setCurrentWavelength(self,wavelength):
         self.sendCommand("caw",wavelength)
     def cleanup(self):
@@ -104,13 +88,6 @@ class MotorControlDummy(MotorControl):
             return "error"
         self.delay(self.commands[command][0])
         return self.commands[command][1]
-
-    def findMinimumPosition(self):
-        self.sendCommand("fmi",0)
-
-    def findMaximumPosition(self):
-        response = self.sendCommand("fma",0)
-        return int(response.lstrip("maximum set to "))
 
     def sendCommand(self,command,value = 0):
         self.log(f"Simulating:${command} {float(value)}")

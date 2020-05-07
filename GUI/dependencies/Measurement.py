@@ -61,7 +61,7 @@ class Measurement:
         totaltemp = 0
         self.startTime = datetime.now()
         for x in range(self.average):
-            statusLabel.setText(f"measuring {self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
+            statusLabel.setText(f"{self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
             QApplication.processEvents()
             temp = spec.features['thermo_electric'][0].read_temperature_degrees_celsius()
             if x == self.average-1:         # last spectrum
@@ -109,7 +109,7 @@ class MeasurementDummy(Measurement):
         totaltemp = 0
         self.startTime = datetime.now()
         for x in range(self.average):
-            statusLabel.setText(f"Simulating:measuring {self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
+            statusLabel.setText(f"{self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
             temp = -25+random()*3
             if x== 0:
                 #just random sines
