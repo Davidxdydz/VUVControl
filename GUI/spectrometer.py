@@ -88,11 +88,9 @@ class Ui(QtWidgets.QMainWindow):
             global motorDummy
             motorDummy = True
             print("Debug mode: motorcontrol dummy used.")
-        # constants
-        self.timeout = 5  # in seconds
 
         # variables
-        
+    
         self.tabWidget = self.findChild(QTabWidget,'tabWidget')
         #config page
         self.comPortBox = self.findChild(QComboBox, 'comPortBox')
@@ -195,7 +193,6 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementComplete.connect(self.onMeasurementComplete)
         self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
         self.progressCallback.connect(self.onSetProgressText)
-        self.sortButton.clicked.connect(self.sortPending)
         self.correctCheckBox.stateChanged.connect(self.resultChanged)
         # setup functions
         self.loadSettings()
@@ -486,10 +483,6 @@ class Ui(QtWidgets.QMainWindow):
         if not self.pendingMeasurements:
             QMessageBox.information(self,"Can't Start","No measurements configured!")
             return
-        if self.pendingMeasurements != sorted(self.pendingMeasurements,key = lambda k:k.wavelength):
-            result = QMessageBox.question(self, "Confirm", "Start with unsorted measurements?",QMessageBox.Yes|QMessageBox.No)
-            if result == QMessageBox.No:
-                return
         self.sortPending()
         self.abortMeasurement = False
         self.abortProgressBar = False

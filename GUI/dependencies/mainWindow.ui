@@ -223,9 +223,9 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="sortButton">
+              <widget class="QPushButton" name="startButton">
                <property name="text">
-                <string>Sort by Wavelength</string>
+                <string>Start Measurement</string>
                </property>
               </widget>
              </item>
@@ -408,13 +408,6 @@
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QPushButton" name="startButton">
-          <property name="text">
-           <string>Start Measurement</string>
-          </property>
-         </widget>
         </item>
        </layout>
       </widget>

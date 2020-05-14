@@ -21,7 +21,9 @@ class MotorControl:
         self.is_open = True
 
     def manualCalibration(self):
-        n = QInputDialog.getInt(self.parent, "Setup","Input current grating",self.estimatedGrating)[0]
+        n,result = QInputDialog.getInt(self.parent, "Setup","Input current grating",self.estimatedGrating)
+        if not result:
+            return
         offset = self.parent.offsetSpinBox.value()
         print(n/10.0+offset)
         self.setCurrentWavelength(n/10.0+offset)

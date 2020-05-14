@@ -18,11 +18,11 @@ possible features:
 vacuum measure
 
 known bugs:
-dismissing motor calibration popups breaks the calibration
 temperature does not get set (sometimes)
 
 code:
 
+why is plotting (kind of ) slow
 thread wrapper class
 commenting
 rename buttons
