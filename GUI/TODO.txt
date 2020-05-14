@@ -2,30 +2,23 @@ Feel free to add any feature requests at the bottom of the document
 
 TODO:
 
-open simple plot tab when single measurement gets selected
 refresh buttons @ spectrometer and comport
 est time accessible
 no autosave popup
 get single spectrum
 save all button
-dead pixels
 restart thread on switch spectrometer
-update graph when new
 tooltips
-lock offset
 
 User error check:
 
 check lamp etc.
-auto dark correct
-
 
 possible features:
 
 vacuum measure
 
 known bugs:
-motorcontrol log is not threadsafe, redirected to python print at the moment
 dismissing motor calibration popups breaks the calibration
 temperature does not get set (sometimes)
 
@@ -33,7 +26,3 @@ code:
 
 commenting
 rename buttons
-
-feature requests:
-
---

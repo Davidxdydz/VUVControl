@@ -64,9 +64,9 @@ class Measurement:
         good = np.where(abs(conv-self.correctedIntensities)< treshhold) # all pixels that deviate to far are removed
         self.correctedWavelengths = self.wavelengths[good]
         self.correctedIntensities = self.correctedIntensities[good]
-        minIndex = np.argmax(self.correctedWavelengths[0]>350) #wavelength range to integrate over
-        maxIndex = np.argmax(self.correctedWavelengths[0]>650)
-        self.correctedIntegratedIntensity = np.trapz(self.correctedIntensities[minIndex:maxIndex],self.correctedWavelengths[0][minIndex:maxIndex]) # sum() does not work as the wavelength difference is not uniform anymore
+        minIndex = np.argmax(self.correctedWavelengths>350) #wavelength range to integrate over
+        maxIndex = np.argmax(self.correctedWavelengths>650)
+        self.correctedIntegratedIntensity = np.trapz(self.correctedIntensities[minIndex:maxIndex],self.correctedWavelengths[minIndex:maxIndex]) # sum() does not work as the wavelength difference is not uniform anymore
 
     def measure(self, spec,statusLabel):
         self.wavelengths = spec.wavelengths()
@@ -146,7 +146,7 @@ class MeasurementDummy(Measurement):
             totaltemp += temp
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
-        #self.calculateCorrected()
+        self.calculateCorrected()
         self.endTime = datetime.now()
         self.integratedIntensity = sum(self.intensities)
         statusLabel.setText("done!")

@@ -187,6 +187,7 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementComplete.connect(self.onMeasurementComplete)
         self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
         self.sortButton.clicked.connect(self.sortPending)
+        self.correctCheckBox.stateChanged.connect(self.resultChanged)
         # setup functions
         self.loadSettings()
         self.refreshComports()
@@ -363,7 +364,7 @@ class Ui(QtWidgets.QMainWindow):
         self.integratedPlotAx.set_ylabel("Integrated Intensity")
         self.integratedPlotAx.set_xlabel("Wavelength [nm]")
         if self.correctCheckBox.checkState() != 0:
-            tmp = [(m.correctedWavelengths,m.correctedIntegratedIntensity) for m in self.selectedResults]
+            tmp = [(m.wavelength,m.correctedIntegratedIntensity) for m in self.selectedResults]
         else:
             tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults]
         if tmp:
@@ -428,11 +429,11 @@ class Ui(QtWidgets.QMainWindow):
         for cur in self.pendingMeasurements[:]:   # make a copy that doesn't change while running
             if self.abortMeasurement:
                 break
-            try:
-                self.motorControl.goToWavelength(cur.wavelength)
-                cur.measure(self.spectrometer,self.statusLabel)
-            except Exception as e:
-                print("Measurement failed:",e)
+            #try:
+            self.motorControl.goToWavelength(cur.wavelength)
+            cur.measure(self.spectrometer,self.statusLabel)
+            #except Exception as e:
+            #    print("Measurement failed:",e)
             if cur.completed:
                 self.measurementComplete.emit(cur)
         self.allMeasurementsComplete.emit()
