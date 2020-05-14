@@ -1,10 +1,12 @@
-#!/usr/local/bin/python3.7
-
 #pip3 install seabreeze
-#
 #pip3 install PyQt5
 #pip3 install pyserial
 #support: david.berger@tum.de
+
+#options: dbgm for debugging with no motor is connected
+#         dbgm for debugging with no spectrometer connected
+#example: python spectrometer.py dbgm dbgs
+
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QInputDialog, QCheckBox, QMessageBox,QFileDialog,QLineEdit, QComboBox, QPushButton, QLabel, QTextBrowser, QScrollBar, QApplication,QListWidget,QDoubleSpinBox,QSpinBox,QGroupBox,QVBoxLayout,QTabWidget
 from PyQt5.QtCore import QSettings,pyqtSignal
@@ -189,12 +191,12 @@ class Ui(QtWidgets.QMainWindow):
         self.loadSettings()
         self.refreshComports()
         self.refreshSpectrometers()
-
         # finally, run the application
-        self.show()
+        self.showMaximized()
 
     def setTargetTemp(self,value):
         if self.spectrometer:
+            print(value)
             self.spectrometer.features['thermo_electric'][0].set_temperature_setpoint_degrees_celsius(value)
 
     def updateTemp(self):
@@ -365,7 +367,7 @@ class Ui(QtWidgets.QMainWindow):
             tmp = np.array(sorted(tmp,key= lambda k:k[0]))
             self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
         for m in self.selectedResults:
-            self.simplePlotAx.plot(m.wavelengths,m.intensities,label=str(m.wavelength))
+            self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
         self.simplePlotAx.grid()
         self.integratedPlotAx.grid()
         if self.selectedResults:
