@@ -391,6 +391,7 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementList.takeItem(0)
         self.completedMeasurements.append(measurement)
         self.resultsList.addItem(str(measurement))
+        self.updateEstimatedTime()
         if(self.saveCheckBox.checkState()!=0): #save this measurement if autosave checkbox is ticked
             try:
                 filename = self.fileEdit.text()
