@@ -16,6 +16,9 @@ class Measurement:
         self.maxTemp = 0
         self.wavelengths = None
         self.intensities = None
+        self.correctedWavelengths = None
+        self.correctedIntensities = None
+        self.correctedIntegratedIntensity = 0
         self.completed = False
         self.startTime = None
         self.endTime = None
@@ -50,6 +53,21 @@ class Measurement:
         plt.grid()
         plt.show()
 
+    def baseline(self):
+        level = 30
+        return np.average(self.intensities[50:150][self.intensities[50:150]<=level]) # offset from zero, an average over some pixels at the start that are smaller than some expected level
+    def calculateCorrected(self):
+        self.correctedIntensities = self.intensities-self.baseline()
+        convWidth = 10
+        treshhold = 15
+        conv = np.convolve(self.correctedIntensities,np.ones(convWidth)/convWidth,"same") # get a moving average
+        good = np.where(abs(conv-self.correctedIntensities)< treshhold) # all pixels that deviate to far are removed
+        self.correctedWavelengths = self.wavelengths[good]
+        self.correctedIntensities = self.correctedIntensities[good]
+        minIndex = np.argmax(self.correctedWavelengths[0]>350) #wavelength range to integrate over
+        maxIndex = np.argmax(self.correctedWavelengths[0]>650)
+        self.correctedIntegratedIntensity = np.trapz(self.correctedIntensities[minIndex:maxIndex],self.correctedWavelengths[0][minIndex:maxIndex]) # sum() does not work as the wavelength difference is not uniform anymore
+
     def measure(self, spec,statusLabel):
         self.wavelengths = spec.wavelengths()
         # The motor needs to be moved in between calls of this function, which is why you can't already set the integration time for the next measurement.
@@ -81,6 +99,7 @@ class Measurement:
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()
+        #self.calculateCorrected()
         self.integratedIntensity = sum(self.intensities)
         statusLabel.setText("done!") #This is a slot, so it should be threadsafe
         self.completed = True
@@ -127,6 +146,7 @@ class MeasurementDummy(Measurement):
             totaltemp += temp
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
+        #self.calculateCorrected()
         self.endTime = datetime.now()
         self.integratedIntensity = sum(self.intensities)
         statusLabel.setText("done!")

@@ -141,6 +141,7 @@ class Ui(QtWidgets.QMainWindow):
         self.integratedPlotAx = self.integratedPlotCanvas.figure.subplots()
         self.saveMeasurementButton = self.findChild(QPushButton,'saveMeasurementButton')
         self.savePlotButton = self.findChild(QPushButton,'savePlotButton')
+        self.correctCheckBox = self.findChild(QCheckBox,'correctCheckBox')
         #settings
         self.settings = QSettings("TUM", "E15Spectrometer")
         #devices and connections
@@ -361,12 +362,19 @@ class Ui(QtWidgets.QMainWindow):
         self.integratedPlotAx.clear()
         self.integratedPlotAx.set_ylabel("Integrated Intensity")
         self.integratedPlotAx.set_xlabel("Wavelength [nm]")
-        tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults]
+        if self.correctCheckBox.checkState() != 0:
+            tmp = [(m.correctedWavelengths,m.correctedIntegratedIntensity) for m in self.selectedResults]
+        else:
+            tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults]
         if tmp:
             tmp = np.array(sorted(tmp,key= lambda k:k[0]))
             self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
         for m in self.selectedResults:
-            self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
+            if self.correctCheckBox.checkState()!=0:
+                self.simplePlotAx.plot(m.correctedWavelengths,m.correctedIntensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
+            else:
+                self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
+
         self.simplePlotAx.grid()
         self.integratedPlotAx.grid()
         if self.selectedResults:
@@ -390,6 +398,7 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementList.takeItem(0)
         self.completedMeasurements.append(measurement)
         self.resultsList.addItem(str(measurement))
+        self.pendingMeasurements.remove(measurement)
         self.updateEstimatedTime()
         if(self.saveCheckBox.checkState()!=0): #save this measurement if autosave checkbox is ticked
             try:
@@ -416,8 +425,9 @@ class Ui(QtWidgets.QMainWindow):
         self.startButton.setText("Start Measurement")
 
     def measureAll(self):
-        while self.pendingMeasurements and not self.abortMeasurement:
-            cur = self.pendingMeasurements.pop(0)
+        for cur in self.pendingMeasurements[:]:   # make a copy that doesn't change while running
+            if self.abortMeasurement:
+                break
             try:
                 self.motorControl.goToWavelength(cur.wavelength)
                 cur.measure(self.spectrometer,self.statusLabel)
@@ -465,6 +475,7 @@ class Ui(QtWidgets.QMainWindow):
         self.settings.setValue("dir",self.outputEdit.text())
         self.settings.setValue("filename",self.fileEdit.text())
         self.settings.setValue("autosave",self.saveCheckBox.checkState())
+        self.settings.setValue("correct",self.correctCheckBox.checkState())
         self.settings.setValue("targetTemp",self.temperatureSpinBox.value())
         self.settings.setValue("offset",self.offsetSpinBox.value())
         if self.motorControl != None:
@@ -486,6 +497,7 @@ class Ui(QtWidgets.QMainWindow):
         self.loadText("dir",self.outputEdit)
         self.loadText("filename",self.fileEdit)
         self.loadCheckBox("autosave",self.saveCheckBox)
+        self.loadCheckBox("correct",self.correctCheckBox)
         self.estimatedGrating = int(self.settings.value("grating") if self.settings.value("grating") else 0)
     def loadFloat(self,name):
         tmp = self.settings.value(name)

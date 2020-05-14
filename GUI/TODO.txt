@@ -2,6 +2,7 @@ Feel free to add any feature requests at the bottom of the document
 
 TODO:
 
+open simple plot tab when single measurement gets selected
 refresh buttons @ spectrometer and comport
 est time accessible
 no autosave popup
