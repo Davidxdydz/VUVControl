@@ -8,7 +8,7 @@
 #example: python spectrometer.py dbgm dbgs
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QInputDialog, QCheckBox, QMessageBox,QFileDialog,QLineEdit, QComboBox, QPushButton, QLabel, QTextBrowser, QScrollBar, QApplication,QListWidget,QDoubleSpinBox,QSpinBox,QGroupBox,QVBoxLayout,QTabWidget
+from PyQt5.QtWidgets import QProgressBar, QInputDialog, QCheckBox, QMessageBox,QFileDialog,QLineEdit, QComboBox, QPushButton, QLabel, QTextBrowser, QScrollBar, QApplication,QListWidget,QDoubleSpinBox,QSpinBox,QGroupBox,QVBoxLayout,QTabWidget
 from PyQt5.QtCore import QSettings,pyqtSignal
 import sys
 import os
@@ -75,6 +75,7 @@ class Ui(QtWidgets.QMainWindow):
     #signals
     allMeasurementsComplete = pyqtSignal()
     measurementComplete = pyqtSignal(object)
+    progressCallback = pyqtSignal(object,object)
 
     def __init__(self):
         super(Ui, self).__init__()
@@ -142,6 +143,7 @@ class Ui(QtWidgets.QMainWindow):
         self.saveMeasurementButton = self.findChild(QPushButton,'saveMeasurementButton')
         self.savePlotButton = self.findChild(QPushButton,'savePlotButton')
         self.correctCheckBox = self.findChild(QCheckBox,'correctCheckBox')
+        self.progressBar = self.findChild(QProgressBar,'progressBar')
         #settings
         self.settings = QSettings("TUM", "E15Spectrometer")
         #devices and connections
@@ -160,10 +162,16 @@ class Ui(QtWidgets.QMainWindow):
         self.abortMeasurement = False
         self.updateTempThread = None
         self.abortTempThread = False
+        self.startTime = None
         self.measurementCount = 0
         self.selectedResults = []
         self.offset = None
         self.estimatedGrating = None
+        self.progressTracker = None
+        self.currentAverage = 0
+        self.totalTime = None
+        self.progressBarThread = None
+        self.abortProgressBar = False
 
         # event triggers
         self.connectArduButton.clicked.connect(self.connectArduino)
@@ -186,6 +194,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctNonlinearCheckBox.stateChanged.connect(self.showNonlinearityChanged)
         self.measurementComplete.connect(self.onMeasurementComplete)
         self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
+        self.progressCallback.connect(self.onSetProgressText)
         self.sortButton.clicked.connect(self.sortPending)
         self.correctCheckBox.stateChanged.connect(self.resultChanged)
         # setup functions
@@ -237,15 +246,22 @@ class Ui(QtWidgets.QMainWindow):
         if dialog.exec():
             self.outputEdit.setText(dialog.directory().absolutePath())
     
-    def updateEstimatedTime(self):
+    def getEstimatedTime(self,currentMeasurement = None):
+        if currentMeasurement == None and self.pendingMeasurements:
+            currentMeasurement = self.pendingMeasurements[0]
+        if currentMeasurement not in self.pendingMeasurements:
+            return timedelta()
         seconds = 0
         prev = None
-        for m in self.pendingMeasurements:
+        for m in self.pendingMeasurements[self.pendingMeasurements.index(currentMeasurement):]:
             if prev != None:
                 seconds+=abs(prev.wavelength - m.wavelength)/2.5 #Motor does ~2.5nm/s
             seconds+= m.integrationtime * m.average
             prev = m
-        dt = timedelta(seconds = int(seconds))
+        return timedelta(seconds = int(seconds))
+
+    def updateEstimatedTime(self):
+        dt = self.getEstimatedTime()
         self.estTimeLabel.setText(f"Estimated time: {dt}")
 
     def refreshSpectrometers(self):
@@ -285,7 +301,6 @@ class Ui(QtWidgets.QMainWindow):
         self.abortTempThread = True
         if self.currentDevice and self.currentDevice.is_open:
             self.spectrometer.close()
-        #TODO: cleanup temperature thread 
 
     def cleanup(self):
         del self.motorControl
@@ -420,20 +435,39 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementCount +=1
 
     def onAllMeasurementsComplete(self):
+        self.abortProgressBar = True
+        self.progressBar.setValue(10000)
         self.measurementsGroupBox.setEnabled(True)
         self.addGroupBox.setEnabled(True)
         self.infoGroupBox.setEnabled(True)
         self.startButton.setText("Start Measurement")
 
+    def onSetProgressText(self,text,value):
+        self.progressBar.setFormat(text)
+        self.progressBar.setValue(value)
+
+    def updateProgressBar(self):
+        while not self.abortProgressBar:
+            cur = self.progressTracker
+            if cur == None or cur.startTime == None:
+                continue
+            remaining = self.getEstimatedTime(cur)-(datetime.now()-cur.startTime)
+            percent = min(max(int(10000-remaining/self.totalTime*10000),0),10000)
+            remaining = timedelta(seconds = int(remaining.seconds))
+            self.progressCallback.emit(f"{remaining} remaining, {cur.wavelength}nm: {cur.integrationtime}s {self.currentAverage+1}/{cur.average}",percent)
+            time.sleep(0.05)
+
     def measureAll(self):
+        self.totalTime = self.getEstimatedTime()
         for cur in self.pendingMeasurements[:]:   # make a copy that doesn't change while running
+            self.progressTracker = cur
             if self.abortMeasurement:
                 break
-            #try:
-            self.motorControl.goToWavelength(cur.wavelength)
-            cur.measure(self.spectrometer,self.statusLabel)
-            #except Exception as e:
-            #    print("Measurement failed:",e)
+            try:
+                self.motorControl.goToWavelength(cur.wavelength)
+                cur.measure(self.spectrometer,self)
+            except Exception as e:
+                print("Measurement failed:",e)
             if cur.completed:
                 self.measurementComplete.emit(cur)
         self.allMeasurementsComplete.emit()
@@ -441,6 +475,7 @@ class Ui(QtWidgets.QMainWindow):
     def startMeasuring(self):
         if self.measurementThread and self.measurementThread.is_alive():
             self.abortMeasurement = True
+            self.abortProgressBar = True
             return
         if self.motorControl == None:
             QMessageBox.critical(self,"Can't Start","Motor control not connected!")
@@ -457,13 +492,17 @@ class Ui(QtWidgets.QMainWindow):
                 return
         self.sortPending()
         self.abortMeasurement = False
+        self.abortProgressBar = False
         self.measurementsGroupBox.setEnabled(False)
         self.addGroupBox.setEnabled(False)
         self.infoGroupBox.setEnabled(False)
         self.startButton.setText("Stop Measurement")
         self.tabWidget.setCurrentIndex(1)
+        self.startTime = datetime.now()
         self.measurementThread = threading.Thread(target=self.measureAll, daemon=True)
         self.measurementThread.start()
+        self.progressBarThread = threading.Thread(target=self.updateProgressBar,daemon=True)
+        self.progressBarThread.start()
         
     def saveSettings(self):
         if self.currentPort:

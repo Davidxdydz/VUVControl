@@ -395,7 +395,7 @@
                   <double>0.010000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>1600.000000000000000</double>
+                  <double>60.000000000000000</double>
                  </property>
                  <property name="value">
                   <double>1.000000000000000</double>
@@ -425,7 +425,7 @@
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
          <layout class="QGridLayout" name="gridLayout_6">
-          <item row="0" column="0">
+          <item row="0" column="0" rowspan="2">
            <widget class="QListWidget" name="resultsList">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
@@ -438,20 +438,7 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0" colspan="4">
-           <widget class="QLabel" name="statusLabel">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>status</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" rowspan="2" colspan="3">
+          <item row="0" column="1" rowspan="2" colspan="2">
            <layout class="QGridLayout" name="gridLayout_14">
             <item row="1" column="1">
              <widget class="QPushButton" name="saveMeasurementButton">
@@ -549,6 +536,40 @@
              </widget>
             </item>
            </layout>
+          </item>
+          <item row="2" column="0" colspan="3">
+           <widget class="QProgressBar" name="progressBar">
+            <property name="styleSheet">
+             <string notr="true">QProgressBar::chunk {
+     background-color: #00AA00;
+     width: 1px;
+ }
+
+ QProgressBar {
+     border: 1px solid black;
+     border-radius: 0px;
+     text-align: center;
+ }</string>
+            </property>
+            <property name="maximum">
+             <number>10000</number>
+            </property>
+            <property name="value">
+             <number>0</number>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+            <property name="textVisible">
+             <bool>true</bool>
+            </property>
+            <property name="invertedAppearance">
+             <bool>false</bool>
+            </property>
+            <property name="format">
+             <string/>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>

@@ -68,7 +68,7 @@ class Measurement:
         maxIndex = np.argmax(self.correctedWavelengths>650)
         self.correctedIntegratedIntensity = np.trapz(self.correctedIntensities[minIndex:maxIndex],self.correctedWavelengths[minIndex:maxIndex]) # sum() does not work as the wavelength difference is not uniform anymore
 
-    def measure(self, spec,statusLabel):
+    def measure(self, spec,main):
         self.wavelengths = spec.wavelengths()
         # The motor needs to be moved in between calls of this function, which is why you can't already set the integration time for the next measurement.
         # The intensities buffer would fill while the grating is moving, giving a fluorescence spectrum of mixed wavelengths
@@ -79,8 +79,7 @@ class Measurement:
         totaltemp = 0
         self.startTime = datetime.now()
         for x in range(self.average):
-            statusLabel.setText(f"{self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
-            QApplication.processEvents()
+            main.currentAverage = x
             temp = spec.features['thermo_electric'][0].read_temperature_degrees_celsius()
             if x == self.average-1:         # last spectrum
                 spec.integration_time_micros(spec.integration_time_micros_limits[0])  # set to the minimum while not measuring, applies after the next (and last) measurement
@@ -99,9 +98,8 @@ class Measurement:
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()
-        #self.calculateCorrected()
+        self.calculateCorrected()
         self.integratedIntensity = sum(self.intensities)
-        statusLabel.setText("done!") #This is a slot, so it should be threadsafe
         self.completed = True
 
     def getHeader(self):
@@ -122,13 +120,13 @@ Temperature spread:\t\t{self.minTemp:.1f} to {self.maxTemp:.1f}°C"""
 
 
 class MeasurementDummy(Measurement):
-    def measure(self, spec,statusLabel):
+    def measure(self, spec,main):
         self.wavelengths = np.linspace(120,900,1000)    
         total = None
         totaltemp = 0
         self.startTime = datetime.now()
         for x in range(self.average):
-            statusLabel.setText(f"{self.wavelength:.1f}nm {self.integrationtime}s {x+1}/{self.average}...")
+            main.currentAverage = x
             temp = -25+random()*3
             if x== 0:
                 #just random sines
@@ -149,5 +147,4 @@ class MeasurementDummy(Measurement):
         self.calculateCorrected()
         self.endTime = datetime.now()
         self.integratedIntensity = sum(self.intensities)
-        statusLabel.setText("done!")
         self.completed = True

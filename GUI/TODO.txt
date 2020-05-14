@@ -3,12 +3,11 @@ Feel free to add any feature requests at the bottom of the document
 TODO:
 
 refresh buttons @ spectrometer and comport
-est time accessible
-no autosave popup
 get single spectrum
 save all button
 restart thread on switch spectrometer
 tooltips
+autoconnect motor
 
 User error check:
 
@@ -24,5 +23,6 @@ temperature does not get set (sometimes)
 
 code:
 
+thread wrapper class
 commenting
 rename buttons
