@@ -99,7 +99,6 @@ class Ui(QtWidgets.QMainWindow):
         self.connectArduButton = self.findChild(QPushButton, 'connectArduButton')
         self.connectSpecButton = self.findChild(QPushButton, 'connectSpecButton')
         self.specInfoLabel = self.findChild(QLabel, 'specInfoLabel')
-        self.comLogBrowser = self.findChild(QTextBrowser, 'comLogBrowser')
         self.browseButton = self.findChild(QPushButton,'browseButton')
         self.outputEdit = self.findChild(QLineEdit,'outputEdit')
         self.fileEdit = self.findChild(QLineEdit,'fileEdit')
@@ -228,7 +227,7 @@ class Ui(QtWidgets.QMainWindow):
         self.ports = serial.tools.list_ports.comports()
         self.comPortBox.addItems([port.device for port in self.ports])
         if motorDummy:
-            self.motorControl = MotorControlDummy(self,self.comLogBrowser,self.estimatedGrating,0)
+            self.motorControl = MotorControlDummy(self,self.estimatedGrating,0)
 
     def selectFolder(self):
         dialog = QFileDialog(self)
@@ -296,7 +295,7 @@ class Ui(QtWidgets.QMainWindow):
             return
         self.currentPort = self.ports[self.comPortBox.currentIndex()]
         try:
-            self.motorControl = MotorControl(self,self.currentPort,self.comLogBrowser,self.estimatedGrating)
+            self.motorControl = MotorControl(self,self.currentPort,self.estimatedGrating)
         except Exception as e:
             QMessageBox.critical(self,"failed intitializing:",str(e))
 

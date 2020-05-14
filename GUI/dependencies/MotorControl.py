@@ -2,9 +2,8 @@ import serial
 import time
 from PyQt5.QtWidgets import QInputDialog,QSpinBox,QTextBrowser,QApplication
 class MotorControl:
-    def __init__(self,parent,port,logBrowser,estimatedGrating,timeout = 250):
+    def __init__(self,parent,port,estimatedGrating,timeout = 250):
         self.ser = serial.Serial(port.device, timeout=timeout)
-        self.logBrowser = logBrowser
         self.parent = parent
         self.estimatedGrating = estimatedGrating
         if self.ser.is_open:
@@ -42,10 +41,6 @@ class MotorControl:
 
     def log(self, message):
         print(message)
-        #NOT THREAD SAFE
-        #self.logBrowser.append(str(message))
-        #s = self.logBrowser.verticalScrollBar()
-        #s.setValue(s.maximum())
 
     def sendCommand(self,command,value = 0):
         self.ser.write(f"${command} {float(value):.2f}".encode())
@@ -69,8 +64,7 @@ class MotorControlDummy(MotorControl):
     #simulates time delay waiting for response
     #always returns no error on the motor part
     #does not simulate connection issues at the moment
-    def __init__(self,parent,logBrowser,estimatedGrating,timescale = 1):
-        self.logBrowser = logBrowser
+    def __init__(self,parent,estimatedGrating,timescale = 1):
         self.log("opened on DUMMYPORT")
         self.timescale = timescale
         self.delay(1)
