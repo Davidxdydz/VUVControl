@@ -1,9 +1,21 @@
 import serial
 import time
 from PyQt5.QtWidgets import QInputDialog,QSpinBox,QTextBrowser,QApplication
+
 class MotorControl:
-    def __init__(self,parent,port,estimatedGrating,timeout = 250):
-        self.ser = serial.Serial(port.device, timeout=timeout)
+    def __init__(self,parent,port,estimatedGrating):
+        """Attempts to connect to port, BLOCKING WITH 250s timeout!
+
+            Parameters
+            ----------
+            parent : 
+                the main ui object
+            port : String
+                the name of the arduino's COMPORT
+            estimatedGrating : int
+                last grating number the motor was
+        """
+        self.ser = serial.Serial(port.device, timeout=250)
         self.parent = parent
         self.estimatedGrating = estimatedGrating
         if self.ser.is_open:
@@ -20,7 +32,9 @@ class MotorControl:
             raise Exception("COM port can't be opened")
         self.is_open = True
 
-    def manualCalibration(self):
+    def calibrate(self):
+        """starts the calibration process
+        """
         n,result = QInputDialog.getInt(self.parent, "Setup","Input current grating",self.estimatedGrating)
         if not result:
             return
@@ -72,7 +86,7 @@ class MotorControlDummy(MotorControl):
         self.delay(1)
         self.log("connected and ready!")
         self.is_open = True
-        self.commands = {"gtp":(1,"yey")}
+        self.commands = {"caw":(1,"yey")}
         self.parent = parent
         self.estimatedGrating = estimatedGrating
 

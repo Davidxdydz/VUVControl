@@ -1,4 +1,3 @@
-Feel free to add any feature requests at the bottom of the document
 
 TODO:
 
@@ -8,10 +7,6 @@ save all button
 restart thread on switch spectrometer
 tooltips
 autoconnect motor
-
-User error check:
-
-check lamp etc.
 
 possible features:
 
@@ -24,5 +19,5 @@ code:
 
 why is plotting (kind of ) slow
 thread wrapper class
-commenting
 rename buttons
+rework structure of measurement dummy

@@ -72,14 +72,15 @@ spectrometerDummy = False
 
 class Ui(QtWidgets.QMainWindow):
 
-    #signals
+    # signals
+    # these are used to get threadsafe UI updates
     allMeasurementsComplete = pyqtSignal()
     measurementComplete = pyqtSignal(object)
     progressCallback = pyqtSignal(object,object)
 
     def __init__(self):
         super(Ui, self).__init__()
-        uic.loadUi('dependencies/mainWindow.ui', self)
+        uic.loadUi('dependencies/mainWindow.ui', self)  # Load the layout from ui file, can be edited with Qt Designer/ Qt Creator
         if "dbgs" in sys.argv:
             global spectrometerDummy
             spectrometerDummy = True
@@ -90,9 +91,11 @@ class Ui(QtWidgets.QMainWindow):
             print("Debug mode: motorcontrol dummy used.")
 
         # variables
-    
+
+        # all widgets are defined in mainWindows.ui
+
         self.tabWidget = self.findChild(QTabWidget,'tabWidget')
-        #config page
+        # config page
         self.comPortBox = self.findChild(QComboBox, 'comPortBox')
         self.specBox = self.findChild(QComboBox, 'specBox')
         self.connectArduButton = self.findChild(QPushButton, 'connectArduButton')
@@ -106,7 +109,7 @@ class Ui(QtWidgets.QMainWindow):
         self.temperatureSpinBox = self.findChild(QDoubleSpinBox,'temperatureSpinBox')
         self.temperatureLabel = self.findChild(QLabel,'temperatureLabel')
         self.offsetSpinBox = self.findChild(QDoubleSpinBox,'offsetSpinBox')
-        #measurement page
+        # measurement page
         self.startButton = self.findChild(QPushButton, 'startButton')
         self.addSingleButton = self.findChild(QPushButton,'addSingleButton')
         self.measurementList = self.findChild(QListWidget,'measurementList')
@@ -126,13 +129,12 @@ class Ui(QtWidgets.QMainWindow):
         self.correctNonlinearCheckBox = self.findChild(QCheckBox,'correctNonlinearCheckBox')
         self.estTimeLabel = self.findChild(QLabel,'estTimeLabel')
         self.sortButton = self.findChild(QPushButton,'sortButton')
-        #results page
+        # results page
         self.resultsList = self.findChild(QListWidget,'resultsList')
-        self.plotLayout = self.findChild(QVBoxLayout,'plotLayout')
-        self.integratedPlotLayout = self.findChild(QVBoxLayout,'integratedPlotLayout')
         self.resultInfoLabel = self.findChild(QLabel,'resultInfoLabel')
-        self.statusLabel = self.findChild(QLabel,'statusLabel')
-        self.simplePlotCanvas = FigureCanvas(Figure())
+        self.plotLayout = self.findChild(QVBoxLayout,'plotLayout')  # the plot layouts are empty placeholders for the plots
+        self.integratedPlotLayout = self.findChild(QVBoxLayout,'integratedPlotLayout')
+        self.simplePlotCanvas = FigureCanvas(Figure())  # Figure Canvas can't be added in Qt Designer
         self.integratedPlotCanvas = FigureCanvas(Figure())
         self.plotLayout.addWidget(self.simplePlotCanvas)
         self.integratedPlotLayout.addWidget(self.integratedPlotCanvas)
@@ -142,58 +144,65 @@ class Ui(QtWidgets.QMainWindow):
         self.savePlotButton = self.findChild(QPushButton,'savePlotButton')
         self.correctCheckBox = self.findChild(QCheckBox,'correctCheckBox')
         self.progressBar = self.findChild(QProgressBar,'progressBar')
-        #settings
-        self.settings = QSettings("TUM", "E15Spectrometer")
-        #devices and connections
-        self.ports = []
+        # settings
+        self.settings = QSettings("TUM", "E15Spectrometer") # don't change company or application name unless you are fine with losing your settings
+        # devices and connections
+        self.ports = [] # COM Ports
         self.currentPort = None
-        self.devices = []
-        self.ser = None
+        self.devices = []   # spectrometer devices
         self.spectrometer = None
         self.currentDevice = None
         self.motorControl = None
-        #measurements
+        # measurements
         self.pendingMeasurements = []
         self.completedMeasurements = []
         self.currentMeasurement = None
+        self.measurementCount = 0
+        self.selectedResults = []
+        # threads
         self.measurementThread = None
         self.abortMeasurement = False
         self.updateTempThread = None
         self.abortTempThread = False
-        self.startTime = None
-        self.measurementCount = 0
-        self.selectedResults = []
-        self.offset = None
-        self.estimatedGrating = None
+        self.progressBarThread = None
+        self.abortProgressBar = False
+        
+        self.offset = None  # TODO: move this into motorcontrol
+        self.estimatedGrating = None # this as well
+        # TODO: find a better solution
+        # variables to keep track of the current state of measurement, have to be changed manually from another thread, unelegant, error-prone and maybe not even threadsafe
         self.progressTracker = None
         self.currentAverage = 0
         self.totalTime = None
-        self.progressBarThread = None
-        self.abortProgressBar = False
+
 
         # event triggers
+        # ui elements
         self.connectArduButton.clicked.connect(self.connectArduino)
         self.startButton.clicked.connect(self.startMeasuring)
         self.addSingleButton.clicked.connect(self.addSingle)
         self.addRangeButton.clicked.connect(self.addRange)
-        self.wavelengthShowSpinBox.valueChanged.connect(self.showWavelengthChanged)
-        self.averageShowSpinBox.valueChanged.connect(self.showAverageChanged)
-        self.integrationShowSpinBox.valueChanged.connect(self.showIntegrationChanged)
-        self.measurementList.itemSelectionChanged.connect(self.measurementChanged)
-        self.resultsList.itemSelectionChanged.connect(self.resultChanged)
+        self.wavelengthShowSpinBox.valueChanged.connect(self.onShowWavelengthChanged)
+        self.averageShowSpinBox.valueChanged.connect(self.onShowAverageChanged)
+        self.integrationShowSpinBox.valueChanged.connect(self.onShowIntegrationChanged)
+        self.measurementList.itemSelectionChanged.connect(self.onMeasurementChanged)
+        self.resultsList.itemSelectionChanged.connect(self.onSelectedResultsChanged)
         self.removeButton.clicked.connect(self.removeMeasurement)
-        self.comPortBox.currentIndexChanged.connect(self.comChanged)
-        self.browseButton.clicked.connect(self.selectFolder)
-        self.useSavedCurrentButton.clicked.connect(self.useSavedCurrent)
+        self.comPortBox.currentIndexChanged.connect(self.onComPortChanged)
+        self.browseButton.clicked.connect(self.onSelectFolderClick)
+        self.useSavedCurrentButton.clicked.connect(self.calibrateMotor)
         self.temperatureSpinBox.valueChanged.connect(self.setTargetTemp)
         self.saveMeasurementButton.clicked.connect(self.saveCurrentMeasurement)
         self.savePlotButton.clicked.connect(self.saveCurrentPlot)
-        self.correctDarkCheckBox.stateChanged.connect(self.showElectricDarkChanged)
-        self.correctNonlinearCheckBox.stateChanged.connect(self.showNonlinearityChanged)
+        self.correctDarkCheckBox.stateChanged.connect(self.onShowElectricDarkChanged)
+        self.correctNonlinearCheckBox.stateChanged.connect(self.onShowNonlinearityChanged)
+        self.correctCheckBox.stateChanged.connect(self.onSelectedResultsChanged)
+        
+        # threadsafe ui updates
         self.measurementComplete.connect(self.onMeasurementComplete)
         self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
         self.progressCallback.connect(self.onSetProgressText)
-        self.correctCheckBox.stateChanged.connect(self.resultChanged)
+
         # setup functions
         self.loadSettings()
         self.refreshComports()
@@ -201,15 +210,30 @@ class Ui(QtWidgets.QMainWindow):
         # finally, run the application
         self.showMaximized()
 
-    def setTargetTemp(self,value):
+    def setTargetTemp(self,temp):
+        """Set the target temperature of the current Spectrometer if connected
+
+        Parameter
+        ---------
+        temp : float
+            target temperature in °C
+
+        """
         if self.spectrometer:
-            print(value)
-            self.spectrometer.features['thermo_electric'][0].set_temperature_setpoint_degrees_celsius(value)
+            print(temp)
+            self.spectrometer.features['thermo_electric'][0].set_temperature_setpoint_degrees_celsius(temp)
 
     def updateTemp(self):
+        """Updates the displayed temperature of the spectrometer
+
+            meant to be run as thread
+
+            set self.abortTempThread = True to stop
+        """
         while not self.abortTempThread:
             try:
                 if self.spectrometer:
+                    # TODO: make this 100% thread safe
                     self.temperatureLabel.setText(f"{self.spectrometer.features['thermo_electric'][0].read_temperature_degrees_celsius()}°C")
                 else:
                     self.temperatureLabel.setText("not connected")
@@ -217,17 +241,20 @@ class Ui(QtWidgets.QMainWindow):
             except Exception as e:
                 print(e)
 
-    def useSavedCurrent(self):
+    def calibrateMotor(self):
+        """invokes motor calibration if motor is connected
+        """
         if self.motorControl == None:
             QMessageBox.critical(self,"Motor control not connected","Please connect the motor control")
             return
-        self.motorControl.manualCalibration()
+        self.motorControl.calibrate()
 
-    def closing(self):
+    def onAboutToQuit(self):
         self.saveSettings()
         self.cleanup()
 
-    def comChanged(self, index):
+    def onComPortChanged(self, index):
+        #T TODO: reconnect to new COM Port
         if index >= 0:
             self.currentPort = self.ports[index]
 
@@ -237,13 +264,24 @@ class Ui(QtWidgets.QMainWindow):
         if motorDummy:
             self.motorControl = MotorControlDummy(self,self.estimatedGrating,0)
 
-    def selectFolder(self):
+    def onSelectFolderClick(self):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.Directory)
         if dialog.exec():
             self.outputEdit.setText(dialog.directory().absolutePath())
     
     def getEstimatedTime(self,currentMeasurement = None):
+        """get the time remaining in pending measurements after current measurement
+
+            Parameter
+            ---------
+            currentMeasurement : Measurement, default None
+                remaining time is calculated only for this and following measurements
+                starts at first measurement if None
+            Returns
+            -------
+            datetime.timedelta with remaining time
+        """
         if currentMeasurement == None and self.pendingMeasurements:
             currentMeasurement = self.pendingMeasurements[0]
         if currentMeasurement not in self.pendingMeasurements:
@@ -257,11 +295,13 @@ class Ui(QtWidgets.QMainWindow):
             prev = m
         return timedelta(seconds = int(seconds))
 
-    def updateEstimatedTime(self):
+    def updateEstimatedTimeLabel(self):
         dt = self.getEstimatedTime()
         self.estTimeLabel.setText(f"Estimated time: {dt}")
 
     def refreshSpectrometers(self):
+        """Refreshs the spectrometer dropdown and connects to selected
+        """
         self.devices = list_devices()
         self.specBox.clear()
         self.specBox.addItems([spec.model for spec in self.devices])
@@ -282,6 +322,8 @@ class Ui(QtWidgets.QMainWindow):
             self.updateTempThread.start()
 
     def saveCurrentMeasurement(self):
+        """Saves the selected result to user specified file if only one result is selected
+        """
         if len(self.selectedResults) != 1:
             QMessageBox.critical(self,"Can't save","Select a single measurement first")
             return
@@ -290,6 +332,9 @@ class Ui(QtWidgets.QMainWindow):
             self.selectedResults[0].save(filename)
 
     def saveCurrentPlot(self):
+        """Saves the plot displayed in the Simple Plot tab
+        """
+        # TODO: allow saving integrated plot
         filename = QFileDialog.getSaveFileName(self,"Save","","picture (*.png")[0]
         if filename:
             self.simplePlotAx.figure.savefig(filename)
@@ -314,17 +359,23 @@ class Ui(QtWidgets.QMainWindow):
             QMessageBox.critical(self,"failed intitializing:",str(e))
 
     def sortPending(self):
+        """Sorts the pending measurements by wavelength
+        """
         self.pendingMeasurements.sort(key=lambda x:x.wavelength)
         self.measurementList.clear()
         self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
-        self.updateEstimatedTime()
+        self.updateEstimatedTimeLabel()
 
     def addSingle(self):
+        """Adds a single measurement to pending measurements with at values specified in the ui elements and sorts all measurements
+        """
         c = MeasurementDummy if spectrometerDummy else Measurement
         self.pendingMeasurements.append(c(self.integrationSpinBox.value(),self.fromSpinBox.value(),self.averageSpinBox.value()))
         self.sortPending()
     
     def addRange(self):
+        """Adds a range of measurements at values specified in the ui elements and sorts all measurements
+        """
         c = MeasurementDummy if spectrometerDummy else Measurement
         for x in np.arange(self.fromSpinBox.value(),self.toSpinBox.value()+self.stepSpinBox.value(),self.stepSpinBox.value()):
             self.pendingMeasurements.append(c(self.integrationSpinBox.value(),x,self.averageSpinBox.value()))
@@ -335,33 +386,35 @@ class Ui(QtWidgets.QMainWindow):
         if self.currentMeasurement and currentRow >=0:
             self.measurementList.takeItem(currentRow)
             self.pendingMeasurements.pop(currentRow)
-        self.updateEstimatedTime()
+        self.updateEstimatedTimeLabel()
 
-    def showElectricDarkChanged(self,value):
+    def onShowElectricDarkChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.correctDarkCounts = bool(value)
 
-    def showNonlinearityChanged(self,value):
+    def onShowNonlinearityChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.correctNonlinearity = bool(value)
 
-    def showWavelengthChanged(self,value):
+    def onShowWavelengthChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.wavelength = value
             self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement.wavelength}nm")
-        self.updateEstimatedTime()
+        self.updateEstimatedTimeLabel()
 
-    def showAverageChanged(self,value):
+    def onShowAverageChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.average = value
-        self.updateEstimatedTime()
+        self.updateEstimatedTimeLabel()
 
-    def showIntegrationChanged(self,value):
+    def onShowIntegrationChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.integrationtime = value
-        self.updateEstimatedTime()
+        self.updateEstimatedTimeLabel()
     
-    def resultChanged(self):
+    def onSelectedResultsChanged(self):
+        """Updates the plot info and plots the selected results
+        """
         selectedIndices = self.resultsList.selectionModel().selectedIndexes()
         self.selectedResults = [self.completedMeasurements[i.row()] for i in selectedIndices]
         if len(self.selectedResults)==1:
@@ -395,7 +448,9 @@ class Ui(QtWidgets.QMainWindow):
         self.simplePlotAx.figure.canvas.draw()
         self.integratedPlotAx.figure.canvas.draw()
     
-    def measurementChanged(self):
+    def onMeasurementChanged(self):
+        """sets the ui elements to the values of the selected pending measurement
+        """
         currentRow = self.measurementList.currentRow()
         if len(self.pendingMeasurements) > currentRow >= 0:
             self.currentMeasurement = self.pendingMeasurements[currentRow]
@@ -408,11 +463,13 @@ class Ui(QtWidgets.QMainWindow):
             self.currentMeasurement = None
 
     def onMeasurementComplete(self,measurement):
+        """gets called when a single measurement completes and saves it if saveCheckBox is checked
+        """
         self.measurementList.takeItem(0)
         self.completedMeasurements.append(measurement)
         self.resultsList.addItem(str(measurement))
         self.pendingMeasurements.remove(measurement)
-        self.updateEstimatedTime()
+        self.updateEstimatedTimeLabel()
         if(self.saveCheckBox.checkState()!=0): #save this measurement if autosave checkbox is ticked
             try:
                 filename = self.fileEdit.text()
@@ -432,6 +489,8 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementCount +=1
 
     def onAllMeasurementsComplete(self):
+        """reenables the ui elements
+        """
         self.abortProgressBar = True
         self.progressBar.setValue(10000)
         self.measurementsGroupBox.setEnabled(True)
@@ -440,10 +499,18 @@ class Ui(QtWidgets.QMainWindow):
         self.startButton.setText("Start Measurement")
 
     def onSetProgressText(self,text,value):
+        """Call self.progressCallback.emit(text,value) for threadsafety
+        """
         self.progressBar.setFormat(text)
         self.progressBar.setValue(value)
 
     def updateProgressBar(self):
+        """Updates the progress bar 20 times per second
+
+            meant to be run as thread
+
+            set self.abortProgressBar = True to stop
+        """
         while not self.abortProgressBar:
             cur = self.progressTracker
             if cur == None or cur.startTime == None:
@@ -455,6 +522,12 @@ class Ui(QtWidgets.QMainWindow):
             time.sleep(0.05)
 
     def measureAll(self):
+        """Attempts all pending measurements
+
+            meant to be run as thread
+
+            set self.abortMeasurement = True to stop after current measurement completes
+        """
         self.totalTime = self.getEstimatedTime()
         for cur in self.pendingMeasurements[:]:   # make a copy that doesn't change while running
             self.progressTracker = cur
@@ -470,6 +543,8 @@ class Ui(QtWidgets.QMainWindow):
         self.allMeasurementsComplete.emit()
 
     def startMeasuring(self):
+        """disables some ui elements and starts measurement threads
+        """
         if self.measurementThread and self.measurementThread.is_alive():
             self.abortMeasurement = True
             self.abortProgressBar = True
@@ -491,7 +566,6 @@ class Ui(QtWidgets.QMainWindow):
         self.infoGroupBox.setEnabled(False)
         self.startButton.setText("Stop Measurement")
         self.tabWidget.setCurrentIndex(1)
-        self.startTime = datetime.now()
         self.measurementThread = threading.Thread(target=self.measureAll, daemon=True)
         self.measurementThread.start()
         self.progressBarThread = threading.Thread(target=self.updateProgressBar,daemon=True)
@@ -532,6 +606,7 @@ class Ui(QtWidgets.QMainWindow):
         self.loadCheckBox("autosave",self.saveCheckBox)
         self.loadCheckBox("correct",self.correctCheckBox)
         self.estimatedGrating = int(self.settings.value("grating") if self.settings.value("grating") else 0)
+
     def loadFloat(self,name):
         tmp = self.settings.value(name)
         if tmp != None:
@@ -555,5 +630,5 @@ class Ui(QtWidgets.QMainWindow):
         
 app = QApplication(sys.argv)
 window = Ui()
-app.aboutToQuit.connect(window.closing)
+app.aboutToQuit.connect(window.onAboutToQuit)
 sys.exit(app.exec_())

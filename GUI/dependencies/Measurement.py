@@ -30,13 +30,15 @@ class Measurement:
 
     @staticmethod
     def completedDummy():
-        #For having a completed measurement to test plotting etc.
+        """Get a completed measurement filled with random sine waves for debugging display
+        """
         res = Measurement(random()*10,random()*100+120,1)
         res.temperature = random()*40-20
         res.wavelengths = np.linspace(120,900,1000)
         res.intensities = np.sin(res.wavelengths/(random()*50+10))
         res.startTime = datetime.now()
         res.endTime = datetime.now()
+        res.calculateCorrected()
         res.completed = True
         return res
 
@@ -44,18 +46,19 @@ class Measurement:
     def __str__(self):
         return f"{self.wavelength:.1f}nm"
 
-    def display(self):
-        if not self.completed:
-            return
-        avgs = self.average + "x" if self.average > 1 else ""
-        plt.title(f"{self.startTime}:{avgs}{self.integrationtime}s @{self.wavelength}nm @{self.temperature}°C")
-        plt.plot(self.wavelengths, self.intensities)
-        plt.grid()
-        plt.show()
+    def baseline(self,level = 30):
+        """Caculates zero offset of the intensities
 
-    def baseline(self):
-        level = 30
+        Parameter
+        ---------
+        level : float, default 30
+            everything lower than this threshhold is considered noise and used to calculate the offset
+        Return
+        ------
+        float : the baseline
+        """
         return np.average(self.intensities[50:150][self.intensities[50:150]<=level]) # offset from zero, an average over some pixels at the start that are smaller than some expected level
+    
     def calculateCorrected(self):
         self.correctedIntensities = self.intensities-self.baseline()
         convWidth = 10
