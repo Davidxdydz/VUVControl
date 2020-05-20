@@ -70,6 +70,7 @@ result4 = spec.intensities()    #returns immediately
 motorDummy = False
 spectrometerDummy = False
 
+
 class Ui(QtWidgets.QMainWindow):
 
     # signals
@@ -81,6 +82,7 @@ class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi('dependencies/mainWindow.ui', self)  # Load the layout from ui file, can be edited with Qt Designer/ Qt Creator
+        
         if "dbgs" in sys.argv:
             global spectrometerDummy
             spectrometerDummy = True
@@ -128,7 +130,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctDarkCheckBox = self.findChild(QCheckBox,'correctDarkCheckBox')
         self.correctNonlinearCheckBox = self.findChild(QCheckBox,'correctNonlinearCheckBox')
         self.estTimeLabel = self.findChild(QLabel,'estTimeLabel')
-        self.sortButton = self.findChild(QPushButton,'sortButton')
+        self.sortCheckBox = self.findChild(QCheckBox,'sortCheckBox')
         # results page
         self.resultsList = self.findChild(QListWidget,'resultsList')
         self.resultInfoLabel = self.findChild(QLabel,'resultInfoLabel')
@@ -197,6 +199,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctDarkCheckBox.stateChanged.connect(self.onShowElectricDarkChanged)
         self.correctNonlinearCheckBox.stateChanged.connect(self.onShowNonlinearityChanged)
         self.correctCheckBox.stateChanged.connect(self.onSelectedResultsChanged)
+        self.sortCheckBox.stateChanged.connect(self.sortPending)
         
         # threadsafe ui updates
         self.measurementComplete.connect(self.onMeasurementComplete)
@@ -364,22 +367,28 @@ class Ui(QtWidgets.QMainWindow):
         self.pendingMeasurements.sort(key=lambda x:x.wavelength)
         self.measurementList.clear()
         self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
+        
+
+    def addPending(self,measurement):
+        self.pendingMeasurements.append(measurement)
+        self.measurementList.addItem(str(measurement))
+        if self.sortCheckBox.checkState() != 0:
+            self.sortPending()
         self.updateEstimatedTimeLabel()
 
+
     def addSingle(self):
-        """Adds a single measurement to pending measurements with at values specified in the ui elements and sorts all measurements
+        """Adds a single measurement to pending measurements with at values specified in the ui elements
         """
         c = MeasurementDummy if spectrometerDummy else Measurement
-        self.pendingMeasurements.append(c(self.integrationSpinBox.value(),self.fromSpinBox.value(),self.averageSpinBox.value()))
-        self.sortPending()
+        self.addPending(c(self.integrationSpinBox.value(),self.fromSpinBox.value(),self.averageSpinBox.value()))
     
     def addRange(self):
-        """Adds a range of measurements at values specified in the ui elements and sorts all measurements
+        """Adds a range of measurements at values specified in the ui elements
         """
         c = MeasurementDummy if spectrometerDummy else Measurement
         for x in np.arange(self.fromSpinBox.value(),self.toSpinBox.value()+self.stepSpinBox.value(),self.stepSpinBox.value()):
-            self.pendingMeasurements.append(c(self.integrationSpinBox.value(),x,self.averageSpinBox.value()))
-        self.sortPending()
+            self.addPending(c(self.integrationSpinBox.value(),x,self.averageSpinBox.value()))
     
     def removeMeasurement(self):
         currentRow= self.measurementList.currentRow()
@@ -558,7 +567,6 @@ class Ui(QtWidgets.QMainWindow):
         if not self.pendingMeasurements:
             QMessageBox.information(self,"Can't Start","No measurements configured!")
             return
-        self.sortPending()
         self.abortMeasurement = False
         self.abortProgressBar = False
         self.measurementsGroupBox.setEnabled(False)
@@ -585,6 +593,7 @@ class Ui(QtWidgets.QMainWindow):
         self.settings.setValue("correct",self.correctCheckBox.checkState())
         self.settings.setValue("targetTemp",self.temperatureSpinBox.value())
         self.settings.setValue("offset",self.offsetSpinBox.value())
+        self.settings.setValue("autosort",self.sortCheckBox.checkState())
         if self.motorControl != None:
             self.settings.setValue("grating",self.motorControl.estimatedGrating)
         self.settings.sync()
@@ -605,6 +614,7 @@ class Ui(QtWidgets.QMainWindow):
         self.loadText("filename",self.fileEdit)
         self.loadCheckBox("autosave",self.saveCheckBox)
         self.loadCheckBox("correct",self.correctCheckBox)
+        self.loadCheckBox("autosort",self.sortCheckBox)
         self.estimatedGrating = int(self.settings.value("grating") if self.settings.value("grating") else 0)
 
     def loadFloat(self,name):

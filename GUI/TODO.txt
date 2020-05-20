@@ -7,10 +7,7 @@ save all button
 restart thread on switch spectrometer
 tooltips
 autoconnect motor
-
-possible features:
-
-vacuum measure
+add movement to first position to est. time
 
 known bugs:
 temperature does not get set (sometimes)

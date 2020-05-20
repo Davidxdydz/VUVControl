@@ -267,22 +267,15 @@
                <property name="sizeConstraint">
                 <enum>QLayout::SetDefaultConstraint</enum>
                </property>
+               <property name="leftMargin">
+                <number>5</number>
+               </property>
                <property name="horizontalSpacing">
                 <number>9</number>
                </property>
                <property name="verticalSpacing">
                 <number>0</number>
                </property>
-               <item row="5" column="1">
-                <widget class="QPushButton" name="addSingleButton">
-                 <property name="toolTip">
-                  <string>Adds a single measurement at the &quot;from&quot; wavlength</string>
-                 </property>
-                 <property name="text">
-                  <string>Add Single</string>
-                 </property>
-                </widget>
-               </item>
                <item row="2" column="1">
                 <widget class="QDoubleSpinBox" name="stepSpinBox">
                  <property name="decimals">
@@ -293,75 +286,6 @@
                  </property>
                  <property name="maximum">
                   <double>200.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0">
-                <widget class="QPushButton" name="addRangeButton">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Add Range</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="0">
-                <widget class="QLabel" name="label_7">
-                 <property name="text">
-                  <string>Integration Time [s]</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_4">
-                 <property name="text">
-                  <string>from [nm]</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                 </property>
-                 <property name="indent">
-                  <number>-1</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QDoubleSpinBox" name="toSpinBox">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
-                 <property name="minimum">
-                  <double>50.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>550.000000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>125.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QDoubleSpinBox" name="fromSpinBox">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
-                 <property name="minimum">
-                  <double>50.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>550.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="0">
-                <widget class="QLabel" name="label_6">
-                 <property name="text">
-                  <string>Average</string>
                  </property>
                 </widget>
                </item>
@@ -382,10 +306,19 @@
                  </property>
                 </widget>
                </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="label_8">
-                 <property name="text">
-                  <string>Stepsize [nm]</string>
+               <item row="1" column="1">
+                <widget class="QDoubleSpinBox" name="toSpinBox">
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="minimum">
+                  <double>50.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>550.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>125.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -399,6 +332,83 @@
                  </property>
                  <property name="value">
                   <double>1.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_4">
+                 <property name="text">
+                  <string>from [nm]</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="indent">
+                  <number>-1</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QDoubleSpinBox" name="fromSpinBox">
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="minimum">
+                  <double>50.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>550.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QPushButton" name="addRangeButton">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Add Range</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label_6">
+                 <property name="text">
+                  <string>Average</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="label_7">
+                 <property name="text">
+                  <string>Integration Time [s]</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="label_8">
+                 <property name="text">
+                  <string>Stepsize [nm]</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QPushButton" name="addSingleButton">
+                 <property name="toolTip">
+                  <string>Adds a single measurement at the &quot;from&quot; wavlength</string>
+                 </property>
+                 <property name="text">
+                  <string>Add Single</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0" colspan="2">
+                <widget class="QCheckBox" name="sortCheckBox">
+                 <property name="text">
+                  <string>Sort by Wavelength</string>
                  </property>
                 </widget>
                </item>
