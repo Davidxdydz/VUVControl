@@ -784,6 +784,40 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>fromSpinBox</tabstop>
+  <tabstop>toSpinBox</tabstop>
+  <tabstop>stepSpinBox</tabstop>
+  <tabstop>averageSpinBox</tabstop>
+  <tabstop>integrationSpinBox</tabstop>
+  <tabstop>addRangeButton</tabstop>
+  <tabstop>addSingleButton</tabstop>
+  <tabstop>sortCheckBox</tabstop>
+  <tabstop>measurementList</tabstop>
+  <tabstop>startButton</tabstop>
+  <tabstop>wavelengthShowSpinBox</tabstop>
+  <tabstop>averageShowSpinBox</tabstop>
+  <tabstop>integrationShowSpinBox</tabstop>
+  <tabstop>correctDarkCheckBox</tabstop>
+  <tabstop>correctNonlinearCheckBox</tabstop>
+  <tabstop>removeButton</tabstop>
+  <tabstop>resultsList</tabstop>
+  <tabstop>tabWidget_2</tabstop>
+  <tabstop>correctCheckBox</tabstop>
+  <tabstop>saveMeasurementButton</tabstop>
+  <tabstop>savePlotButton</tabstop>
+  <tabstop>outputEdit</tabstop>
+  <tabstop>browseButton</tabstop>
+  <tabstop>fileEdit</tabstop>
+  <tabstop>saveCheckBox</tabstop>
+  <tabstop>comPortBox</tabstop>
+  <tabstop>connectArduButton</tabstop>
+  <tabstop>offsetSpinBox</tabstop>
+  <tabstop>useSavedCurrentButton</tabstop>
+  <tabstop>specBox</tabstop>
+  <tabstop>temperatureSpinBox</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
