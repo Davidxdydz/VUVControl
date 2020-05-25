@@ -1,16 +1,15 @@
 # Introduction
 
-This Project aims to provide a program to control a VUV spectrometer enable automatic measurements and selection of wavelengths via an attached motor
+This Project aims to provide a program to control a VUV spectrometer, enable automatic measurements and selection of wavelengths via an attached motor
 
 ## Contents
 
 motor control: Arduino code for controlling the stepper motor
-GUI: Python code to run on the measurment laptop/raspberry and connect to the motor control and spectrometer, provides a hopefully easy to use user interface
+GUI: Python code to run on the measurement laptop/raspberry and connect to the motor control and spectrometer, provides a hopefully easy to use user interface
 
 ## State
 
-The program can already be used to take measurements, but is lacking some error handling etc.  
-IF you want to use it at this early state, don't dismiss messageboxes :)  
+Runs stable (most of the time :p)
 Runs on windows and linux (tested on raspbian buster), and *maybe* on mac  
 At the moment there is a TODO list in every folder as opening issues in a mostly single person project is overcomplicated  
 
@@ -25,16 +24,39 @@ matplotlib for plots
 pyQt 5 for the application itself  
 pyserial for commumication with the arduino  
 ```bash
-pip install seabreeze
+pip3 install seabreeze
 seabreeze_os_setup
-pip install matplotlib
-pip install PyQt5
-pip install pyserial
+pip3 install matplotlib
+pip3 install PyQt5
+pip3 install pyserial
 ```
 
 ## Running the GUI
-just launch spectrometer.py,
-or, to get more error/debug messages open in terminal:
+Execute with double click (Windows) or from the terminal
 ```bash
-python spectrometer.py
+python3 spectrometer.py
 ```
+### Launch Options
+**dbgm**: emulate the motor  
+**dbgs**: emulate the spectrometer, the intensities returned are random sine waves  
+Example:
+```bash
+python3 spectrometer.py dbgm dbgs
+```
+
+##  Usage
+All settings get saved between launches, so some steps can be skipped after the inital launch. Steps 3 to 6 do not have a specific order.
+1. Connect spectrometer and arduino via usb
+2. Click the "connect" button, wait for "connected"
+3. Input the offset in nanometers of the gratings dial (should probably stay at -26.3)
+4. Input the number on the gratings dial after clicking "calibrate to current wavelength"
+5. Set the target temperature of the spectrometer
+6. Configure your output files
+7. Go to the "Create Measurements" tab and start measuring!
+
+## Things to be aware of
+- The autosave function overwrites existing files without asking
+- The application needs to be restarted when spectrometer or motor (arduino) have not been connected at launch
+- Aborting measurements takes some time as the current measurement is always finished first
+- Sometimes the spectrometer can't keep up with cooling (espacially in a warm environment) and just gives up
+- Sometimes the dark-and-dead correction does not work properly; the plots will then fall back to the raw spectrum without warning
