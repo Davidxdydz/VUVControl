@@ -2,10 +2,8 @@
 TODO:
 
 refresh buttons @ spectrometer and comport
-get single spectrum
 save all button
 restart thread on switch spectrometer
-tooltips
 autoconnect motor
 add movement to first position to est. time
 
@@ -14,7 +12,7 @@ temperature does not get set (sometimes)
 
 code:
 
-why is plotting (kind of ) slow
+why is plotting (kind of ) slow, maybe switch to QGraph?
 thread wrapper class
 rename buttons
 rework structure of measurement dummy

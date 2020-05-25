@@ -358,6 +358,7 @@ class Ui(QtWidgets.QMainWindow):
         self.currentPort = self.ports[self.comPortBox.currentIndex()]
         try:
             self.motorControl = MotorControl(self,self.currentPort,self.estimatedGrating)
+            self.connectArduButton.setText("connected")
         except Exception as e:
             QMessageBox.critical(self,"failed intitializing:",str(e))
 
