@@ -521,6 +521,7 @@ class Ui(QtWidgets.QMainWindow):
             set self.abortProgressBar = True to stop
         """
         while not self.abortProgressBar:
+            time.sleep(0.05)
             cur = self.progressTracker
             if cur == None or cur.startTime == None:
                 continue
@@ -528,7 +529,6 @@ class Ui(QtWidgets.QMainWindow):
             percent = min(max(int(10000-remaining/self.totalTime*10000),0),10000)
             remaining = timedelta(seconds = int(remaining.seconds))
             self.progressCallback.emit(f"{remaining} remaining, {cur.wavelength}nm: {cur.integrationtime}s {self.currentAverage+1}/{cur.average}",percent)
-            time.sleep(0.05)
 
     def measureAll(self):
         """Attempts all pending measurements

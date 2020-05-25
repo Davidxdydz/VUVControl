@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from random import random
 import numpy as np
+import os
 from PyQt5.QtWidgets import QApplication
 
 class Measurement:
@@ -101,9 +102,18 @@ class Measurement:
         self.temperature = totaltemp/self.average
         self.intensities = total/self.average
         self.endTime = datetime.now()
-        self.calculateCorrected()
+        #self.calculateCorrected()
         self.integratedIntensity = sum(self.intensities)
         self.completed = True
+
+    def getFilename(self,directory,fileformat):
+        #TODO: %n does not work
+        filename = fileformat
+        filename = filename.replace("%wav",f"{self.wavelength:.1f}")
+        filename = filename.replace("%date",self.startTime.strftime("%d_%m_%Y"))
+        #filename = filename.replace("%n",f"{self.measurementCount}")
+        filename = filename.replace("%time",self.startTime.strftime("%H-%M-%S"))
+        return os.path.join(directory,filename)
 
     def getHeader(self):
         return  \

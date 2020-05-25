@@ -15,7 +15,7 @@ class MotorControl:
             estimatedGrating : int
                 last grating number the motor was
         """
-        self.ser = serial.Serial(port.device, timeout=250)
+        self.ser = serial.Serial(port.device, timeout=10)
         self.parent = parent
         self.estimatedGrating = estimatedGrating
         if self.ser.is_open:
@@ -31,6 +31,7 @@ class MotorControl:
             self.log("COM port can't be opened")
             raise Exception("COM port can't be opened")
         self.is_open = True
+        self.ser.timeout= 250
 
     def calibrate(self):
         """starts the calibration process
