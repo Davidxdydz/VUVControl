@@ -502,7 +502,7 @@ class Ui(QtWidgets.QMainWindow):
         """reenables the ui elements
         """
         self.abortProgressBar = True
-        self.progressBar.setValue(10000)
+        self.progressCallback.emit("Done!",10000)
         self.measurementsGroupBox.setEnabled(True)
         self.addGroupBox.setEnabled(True)
         self.infoGroupBox.setEnabled(True)
@@ -530,6 +530,8 @@ class Ui(QtWidgets.QMainWindow):
             percent = min(max(int(10000-remaining/self.totalTime*10000),0),10000)
             remaining = timedelta(seconds = int(remaining.seconds))
             self.progressCallback.emit(f"{remaining} remaining, {cur.wavelength}nm: {cur.integrationtime}s {self.currentAverage+1}/{cur.average}",percent)
+        else:
+            self.progressCallback.emit(f"Done!",10000)
 
     def measureAll(self):
         """Attempts all pending measurements
