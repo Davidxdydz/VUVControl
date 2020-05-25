@@ -428,7 +428,7 @@ class Ui(QtWidgets.QMainWindow):
         self.selectedResults = [self.completedMeasurements[i.row()] for i in selectedIndices]
         if len(self.selectedResults)==1:
             tmp = self.selectedResults[0]
-            self.resultInfoLabel.setText(tmp.getHeader()+f"\n\nTotal intensity\t\t\t{tmp.integratedIntensity:.2f}")
+            self.resultInfoLabel.setText(tmp.getHeader()+f"\n\nTotal intensity:\t\t\t{tmp.integratedIntensity:.2f}\ndark level:\t\t\t{tmp.darkLevel:.2f}")
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
         self.simplePlotAx.clear()
@@ -438,14 +438,14 @@ class Ui(QtWidgets.QMainWindow):
         self.integratedPlotAx.set_ylabel("Integrated Intensity")
         self.integratedPlotAx.set_xlabel("Wavelength [nm]")
         if self.correctCheckBox.checkState() != 0:
-            tmp = [(m.wavelength,m.correctedIntegratedIntensity) for m in self.selectedResults]
+            tmp = [(m.wavelength,m.correctedIntegratedIntensity if m.darkLevel else m.integratedIntensity) for m in self.selectedResults]
         else:
             tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults]
         if tmp:
             tmp = np.array(sorted(tmp,key= lambda k:k[0]))
             self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
         for m in self.selectedResults:
-            if self.correctCheckBox.checkState()!=0:
+            if self.correctCheckBox.checkState()!=0 and m.darkLevel != None:
                 self.simplePlotAx.plot(m.correctedWavelengths,m.correctedIntensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
             else:
                 self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
