@@ -18,6 +18,7 @@ class MotorControl:
         self.ser = serial.Serial(port.device, timeout=10)
         self.parent = parent
         self.estimatedGrating = estimatedGrating
+        self.offset = 0
         if self.ser.is_open:
             self.log(f"opened on {self.ser.port}...")
             QApplication.processEvents()
@@ -39,10 +40,13 @@ class MotorControl:
         n,result = QInputDialog.getInt(self.parent, "Setup","Input current grating",self.estimatedGrating)
         if not result:
             return
-        offset = self.parent.offsetSpinBox.value()
-        print(n/10.0+offset)
-        self.setCurrentWavelength(n/10.0+offset)
+        self.offset = self.parent.offsetSpinBox.value()
+        self.setCurrentWavelength(n/10.0+self.offset)
         self.estimatedGrating = n
+        print(self.getCurrentWavelength())
+
+    def getCurrentWavelength(self):
+        return self.estimatedGrating/10+self.offset
 
     def getResponse(self):
         response = self.ser.readline().decode()
@@ -65,9 +69,8 @@ class MotorControl:
 
     def goToWavelength(self,wavelength):
         self.sendCommand("gtw",wavelength)
-        offset = self.parent.offsetSpinBox.value()
-        self.estimatedGrating = int((wavelength-offset)*10)
-
+        self.offset = self.parent.offsetSpinBox.value()
+        self.estimatedGrating = int((wavelength-self.offset)*10)
     def setCurrentWavelength(self,wavelength):
         self.sendCommand("caw",wavelength)
     def cleanup(self):
@@ -90,6 +93,7 @@ class MotorControlDummy(MotorControl):
         self.commands = {"caw":(1,"yey")}
         self.parent = parent
         self.estimatedGrating = estimatedGrating
+        self.offset = 0
 
     def delay(self,duration):
         time.sleep(duration*self.timescale)
