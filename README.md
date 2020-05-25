@@ -4,12 +4,12 @@ This Project aims to provide a program to control a VUV spectrometer, enable aut
 
 ## Contents
 
-motor control: Arduino code for controlling the stepper motor
+motor control: Arduino code for controlling the stepper motor  
 GUI: Python code to run on the measurement laptop/raspberry and connect to the motor control and spectrometer, provides a hopefully easy to use user interface
 
 ## State
 
-Runs stable (most of the time :p)
+Runs stable (most of the time)  
 Runs on windows and linux (tested on raspbian buster), and *maybe* on mac  
 At the moment there is a TODO list in every folder as opening issues in a mostly single person project is overcomplicated  
 
