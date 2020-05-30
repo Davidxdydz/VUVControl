@@ -435,6 +435,34 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
         self.updateEstimatedTimeLabel()
     
+    def drawSimplePlot(self):
+        self.simplePlotAx.clear()
+        self.simplePlotAx.set_ylabel("Intensity")
+        self.simplePlotAx.set_xlabel("Wavelength [nm]")
+        self.simplePlotAx.grid()
+        for m in self.selectedResults:
+                if self.correctCheckBox.checkState()!=0 and m.darkLevel != None:
+                    self.simplePlotAx.plot(m.correctedWavelengths,m.correctedIntensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
+                else:
+                    self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
+        self.simplePlotAx.figure.canvas.draw()
+        if 10>len(self.selectedResults)>0:
+            self.simplePlotAx.legend()
+
+    def drawIntegratedPlot(self):
+        self.integratedPlotAx.clear()
+        self.integratedPlotAx.set_ylabel("Integrated Intensity")
+        self.integratedPlotAx.set_xlabel("Wavelength [nm]")
+        self.integratedPlotAx.grid()
+        if self.correctCheckBox.checkState() != 0:
+            tmp = [(m.wavelength,m.correctedIntegratedIntensity if m.darkLevel else m.integratedIntensity) for m in self.selectedResults if not isinstance(m,WaitTimer)]
+        else:
+            tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults if not isinstance(m,WaitTimer)]
+        if tmp:
+            tmp = np.array(sorted(tmp,key= lambda k:k[0]))
+            self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
+        self.integratedPlotAx.figure.canvas.draw()
+
     def onSelectedResultsChanged(self):
         """Updates the plot info and plots the selected results
         """
@@ -446,31 +474,8 @@ class Ui(QtWidgets.QMainWindow):
             self.resultInfoLabel.setText(tmp.getInfoText())
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
-        self.simplePlotAx.clear()
-        self.simplePlotAx.set_ylabel("Intensity")
-        self.simplePlotAx.set_xlabel("Wavelength [nm]")
-        self.integratedPlotAx.clear()
-        self.integratedPlotAx.set_ylabel("Integrated Intensity")
-        self.integratedPlotAx.set_xlabel("Wavelength [nm]")
-        if self.correctCheckBox.checkState() != 0:
-            tmp = [(m.wavelength,m.correctedIntegratedIntensity if m.darkLevel else m.integratedIntensity) for m in self.selectedResults if not isinstance(m,WaitTimer)]
-        else:
-            tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults if not isinstance(m,WaitTimer)]
-        if tmp:
-            tmp = np.array(sorted(tmp,key= lambda k:k[0]))
-            self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
-        for m in self.selectedResults:
-            if self.correctCheckBox.checkState()!=0 and m.darkLevel != None:
-                self.simplePlotAx.plot(m.correctedWavelengths,m.correctedIntensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
-            else:
-                self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
-
-        self.simplePlotAx.grid()
-        self.integratedPlotAx.grid()
-        if self.selectedResults:
-            self.simplePlotAx.legend()
-        self.simplePlotAx.figure.canvas.draw()
-        self.integratedPlotAx.figure.canvas.draw()
+        self.drawSimplePlot()
+        self.drawIntegratedPlot()
     
     def onMeasurementChanged(self):
         """sets the ui elements to the values of the selected pending measurement
