@@ -25,6 +25,7 @@ class MotorControl:
             response = self.ser.readline().decode()
             if response:
                 self.log(response)
+                self.calibrate()
             else:
                 self.log("Motor does not respond")
                 raise Exception("Motor does not respond")
