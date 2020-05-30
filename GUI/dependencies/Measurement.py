@@ -9,6 +9,8 @@ import os
 from PyQt5.QtWidgets import QApplication
 
 class Measurement:
+    count = 0
+    group = 0
     def __init__(self, integrationtime, wavelength, average=1,correctNonlinearity = True,correctDarkCounts = True):
         self.integrationtime = integrationtime  # in seconds
         self.wavelength = wavelength  # in nanometers
@@ -28,6 +30,8 @@ class Measurement:
         self.correctNonlinearity = correctNonlinearity
         self.correctDarkCounts = correctDarkCounts
         self.integratedIntensity = 0
+        self.count = 0
+        self.group = 0
     
     def getInfoText(self):
         return self.getHeader()+f"\n\nTotal intensity:\t\t\t{self.integratedIntensity:.2f}\ndark level:\t\t\t{self.darkLevel:.2f}"

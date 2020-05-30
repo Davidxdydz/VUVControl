@@ -173,12 +173,15 @@ class Ui(QtWidgets.QMainWindow):
         
         self.offset = None  # TODO: move this into motorcontrol
         self.estimatedGrating = None # this as well
+
         # TODO: find a better solution
         # variables to keep track of the current state of measurement, have to be changed manually from another thread, unelegant, error-prone and maybe not even threadsafe
         self.progressTracker = None
         self.currentAverage = 0
         self.totalTime = None
 
+        self.redrawSimplePlot = True #For only redrawing plots when needed
+        self.redrawIntegratedPlot = True
 
         # event triggers
         # ui elements
@@ -203,6 +206,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctCheckBox.stateChanged.connect(self.onSelectedResultsChanged)
         self.sortCheckBox.stateChanged.connect(self.sortPending)
         self.addTimerButton.clicked.connect(self.onAddTimerClick)
+        self.plotTabWidget.currentChanged.connect(self.onCurrentPlotTabChanged)
         
         # threadsafe ui updates
         self.measurementComplete.connect(self.onMeasurementComplete)
@@ -282,6 +286,11 @@ class Ui(QtWidgets.QMainWindow):
         if dialog.exec():
             self.outputEdit.setText(dialog.directory().absolutePath())
     
+    def onCurrentPlotTabChanged(self):
+        if self.plotTabWidget.currentIndex()==0 and self.redrawSimplePlot:
+            self.drawSimplePlot()
+        if self.plotTabWidget.currentIndex()==1 and self.redrawIntegratedPlot:
+            self.drawIntegratedPlot()
     def getEstimatedTime(self,currentMeasurement = None):
         """get the time remaining in pending measurements after current measurement
 
@@ -445,9 +454,10 @@ class Ui(QtWidgets.QMainWindow):
                     self.simplePlotAx.plot(m.correctedWavelengths,m.correctedIntensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
                 else:
                     self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
-        self.simplePlotAx.figure.canvas.draw()
-        if 10>len(self.selectedResults)>0:
+        if 1<len(self.selectedResults)<15:
             self.simplePlotAx.legend()
+        self.simplePlotAx.figure.canvas.draw()
+        self.redrawSimplePlot = False
 
     def drawIntegratedPlot(self):
         self.integratedPlotAx.clear()
@@ -462,19 +472,25 @@ class Ui(QtWidgets.QMainWindow):
             tmp = np.array(sorted(tmp,key= lambda k:k[0]))
             self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
         self.integratedPlotAx.figure.canvas.draw()
+        self.redrawIntegratedPlot = False
 
     def onSelectedResultsChanged(self):
         """Updates the plot info and plots the selected results
         """
         selectedIndices = self.resultsList.selectionModel().selectedIndexes()
         self.selectedResults = [self.completedMeasurements[i.row()] for i in selectedIndices]
+        self.redrawSimplePlot = True
+        self.redrawIntegratedPlot = True
         if len(self.selectedResults)==1:
             tmp = self.selectedResults[0]
             self.resultInfoLabel.setText(tmp.getInfoText())
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
-        self.drawSimplePlot()
-        self.drawIntegratedPlot()
+
+        if self.plotTabWidget.currentIndex()==0:
+            self.drawSimplePlot()
+        if self.plotTabWidget.currentIndex()==1:
+            self.drawIntegratedPlot()
     
     def onMeasurementChanged(self):
         """sets the ui elements to the values of the selected pending measurement
