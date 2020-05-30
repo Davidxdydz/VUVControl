@@ -102,61 +102,17 @@ class Ui(QtWidgets.QMainWindow):
 
         # variables
 
-        # all widgets are defined in mainWindows.ui
-
-        self.tabWidget = self.findChild(QTabWidget,'tabWidget')
-        # config page
-        self.comPortBox = self.findChild(QComboBox, 'comPortBox')
-        self.specBox = self.findChild(QComboBox, 'specBox')
-        self.connectArduButton = self.findChild(QPushButton, 'connectArduButton')
-        self.connectSpecButton = self.findChild(QPushButton, 'connectSpecButton')
-        self.specInfoLabel = self.findChild(QLabel, 'specInfoLabel')
-        self.browseButton = self.findChild(QPushButton,'browseButton')
-        self.outputEdit = self.findChild(QLineEdit,'outputEdit')
-        self.fileEdit = self.findChild(QLineEdit,'fileEdit')
-        self.saveCheckBox = self.findChild(QCheckBox,'saveCheckBox')
-        self.useSavedCurrentButton = self.findChild(QPushButton,'useSavedCurrentButton')
-        self.temperatureSpinBox = self.findChild(QDoubleSpinBox,'temperatureSpinBox')
-        self.temperatureLabel = self.findChild(QLabel,'temperatureLabel')
-        self.offsetSpinBox = self.findChild(QDoubleSpinBox,'offsetSpinBox')
-
-        # measurement page
-        self.startButton = self.findChild(QPushButton, 'startButton')
-        self.addSingleButton = self.findChild(QPushButton,'addSingleButton')
-        self.measurementList = self.findChild(QListWidget,'measurementList')
-        self.fromSpinBox = self.findChild(QDoubleSpinBox, 'fromSpinBox')
-        self.toSpinBox = self.findChild(QDoubleSpinBox,'toSpinBox')
-        self.averageSpinBox = self.findChild(QSpinBox,'averageSpinBox')
-        self.integrationSpinBox = self.findChild(QDoubleSpinBox,'integrationSpinBox')
-        self.averageShowSpinBox = self.findChild(QSpinBox,'averageShowSpinBox')
-        self.wavelengthShowSpinBox = self.findChild(QDoubleSpinBox,'wavelengthShowSpinBox')
-        self.integrationShowSpinBox = self.findChild(QDoubleSpinBox,'integrationShowSpinBox')
-        self.stepSpinBox = self.findChild(QDoubleSpinBox,'stepSpinBox')
-        self.addGroupBox = self.findChild(QGroupBox,'addGroupBox')
-        self.measurementsGroupBox = self.findChild(QGroupBox,'addGroupBox')
-        self.infoGroupBox = self.findChild(QGroupBox,'infoGroupBox')
-        self.removeButton = self.findChild(QPushButton,'removeButton')
-        self.correctDarkCheckBox = self.findChild(QCheckBox,'correctDarkCheckBox')
-        self.correctNonlinearCheckBox = self.findChild(QCheckBox,'correctNonlinearCheckBox')
-        self.estTimeLabel = self.findChild(QLabel,'estTimeLabel')
-        self.addTimerButton = self.findChild(QPushButton,'addTimerButton')
-
-        # results page
-        self.resultsList = self.findChild(QListWidget,'resultsList')
-        self.resultInfoLabel = self.findChild(QLabel,'resultInfoLabel')
-        self.plotLayout = self.findChild(QVBoxLayout,'plotLayout')  # the plot layouts are empty placeholders for the plots
-        self.integratedPlotLayout = self.findChild(QVBoxLayout,'integratedPlotLayout')
-        self.simplePlotCanvas = FigureCanvas(Figure())  # Figure Canvas can't be added in Qt Designer
+        # all widgets are defined in mainWindows.ui, but have to be defined in this class as well
+        self.defineChildren(self)
+        
+        # Figure Canvas can't be added in Qt Designer
+        self.simplePlotCanvas = FigureCanvas(Figure())
         self.integratedPlotCanvas = FigureCanvas(Figure())
         self.plotLayout.addWidget(self.simplePlotCanvas)
         self.integratedPlotLayout.addWidget(self.integratedPlotCanvas)
         self.simplePlotAx = self.simplePlotCanvas.figure.subplots()
         self.integratedPlotAx = self.integratedPlotCanvas.figure.subplots()
-        self.saveMeasurementButton = self.findChild(QPushButton,'saveMeasurementButton')
-        self.savePlotButton = self.findChild(QPushButton,'savePlotButton')
-        self.correctCheckBox = self.findChild(QCheckBox,'correctCheckBox')
-        self.progressBar = self.findChild(QProgressBar,'progressBar')
-        self.plotTabWidget = self.findChild(QTabWidget,'plotTabWidget')
+        
         # settings
         self.settings = QSettings("TUM", "E15Spectrometer") # don't change company or application name unless you are fine with losing your settings
         # devices and connections
@@ -226,6 +182,12 @@ class Ui(QtWidgets.QMainWindow):
         self.refreshSpectrometers()
         # finally, run the application
         self.showMaximized()
+    
+    def defineChildren(self,obj):
+        for x in obj.children():
+            if x.objectName():
+                setattr(self,x.objectName(),x)
+            self.defineChildren(x)
 
     def setTargetTemp(self,temp):
         """Set the target temperature of the current Spectrometer if connected
