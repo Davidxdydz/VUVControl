@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import random
 import numpy as np
 import os
@@ -29,6 +29,11 @@ class Measurement:
         self.correctDarkCounts = correctDarkCounts
         self.integratedIntensity = 0
     
+    def getInfoText(self):
+        return self.getHeader()+f"\n\nTotal intensity:\t\t\t{self.integratedIntensity:.2f}\ndark level:\t\t\t{self.darkLevel:.2f}"
+
+    def __str__(self):
+        return f"{self.wavelength:.1f}.nm"
 
     @staticmethod
     def completedDummy():
@@ -43,10 +48,6 @@ class Measurement:
         res.calculateCorrected()
         res.completed = True
         return res
-
-
-    def __str__(self):
-        return f"{self.wavelength:.1f}nm"
 
     def baseline(self,level = 30):
         """Caculates zero offset of the intensities
@@ -75,7 +76,8 @@ class Measurement:
         self.correctedIntegratedIntensity = np.trapz(self.correctedIntensities[minIndex:maxIndex],self.correctedWavelengths[minIndex:maxIndex]) # sum() does not work as the wavelength difference is not uniform anymore
         self.darkLevel = darkLevel
         
-    def measure(self, spec,main):
+    def measure(self, spec,motorControl,main):
+        motorControl.goToWavelength(self.wavelength)
         self.wavelengths = spec.wavelengths()
         # The motor needs to be moved in between calls of this function, which is why you can't already set the integration time for the next measurement.
         # The intensities buffer would fill while the grating is moving, giving a fluorescence spectrum of mixed wavelengths
@@ -139,7 +141,8 @@ Temperature spread:\t\t{self.minTemp:.1f} to {self.maxTemp:.1f}°C"""
 
 
 class MeasurementDummy(Measurement):
-    def measure(self, spec,main):
+    def measure(self, spec,motorControl,main):
+        motorControl.goToWavelength(self.wavelength)
         self.wavelengths = np.linspace(120,900,1000)    
         total = None
         totaltemp = 0
@@ -167,3 +170,32 @@ class MeasurementDummy(Measurement):
         self.endTime = datetime.now()
         self.integratedIntensity = sum(self.intensities)
         self.completed = True
+
+class WaitTimer(Measurement):
+    def __init__(self,duration):
+        Measurement.__init__(self,duration,0,1)
+    def measure(self, spec,motorControl,main):
+        self.wavelengths = []
+        self.startTime = datetime.now()
+        for x in range(self.average):
+            main.currentAverage = x
+            if x== 0:
+                time.sleep(self.integrationtime)
+            else:
+                time.sleep(self.integrationtime)
+        self.minTemp = 0
+        self.maxTemp = 0
+        self.temperature = 0
+        self.intensities = np.array([])
+        self.correctedIntensities = np.array([])
+        self.wavelength = np.array([])
+        self.endTime = datetime.now()
+        self.integratedIntensity = 0
+        self.completed = True
+    def save(self,path):
+        ...
+    def __str__(self):
+        return f"Wait {timedelta(seconds  = self.integrationtime)}"
+
+    def getInfoText(self):
+        return f"Start Time:\t\t\t{self.startTime:%d.%m.%Y %H:%M:%S}\nEnd Time:\t\t\t{self.endTime:%d.%m.%Y %H:%M:%S}\nWaited for:\t\t\t\t{timedelta(seconds = self.integrationtime)}"

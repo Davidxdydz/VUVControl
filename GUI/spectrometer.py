@@ -131,6 +131,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctNonlinearCheckBox = self.findChild(QCheckBox,'correctNonlinearCheckBox')
         self.estTimeLabel = self.findChild(QLabel,'estTimeLabel')
         self.sortCheckBox = self.findChild(QCheckBox,'sortCheckBox')
+        self.addTimerButton = self.findChild(QPushButton,'addTimerButton')
         # results page
         self.resultsList = self.findChild(QListWidget,'resultsList')
         self.resultInfoLabel = self.findChild(QLabel,'resultInfoLabel')
@@ -200,6 +201,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctNonlinearCheckBox.stateChanged.connect(self.onShowNonlinearityChanged)
         self.correctCheckBox.stateChanged.connect(self.onSelectedResultsChanged)
         self.sortCheckBox.stateChanged.connect(self.sortPending)
+        self.addTimerButton.clicked.connect(self.onAddTimerClick)
         
         # threadsafe ui updates
         self.measurementComplete.connect(self.onMeasurementComplete)
@@ -256,6 +258,12 @@ class Ui(QtWidgets.QMainWindow):
         self.saveSettings()
         self.cleanup()
 
+    def onAddTimerClick(self):
+        n,result = QInputDialog.getInt(self, "Add Wait Timer","Input time in seconds",60)
+        if not result:
+            return
+        self.addPending(WaitTimer(n))
+
     def onComPortChanged(self, index):
         #T TODO: reconnect to new COM Port
         if index >= 0:
@@ -295,7 +303,8 @@ class Ui(QtWidgets.QMainWindow):
             if prev != None:
                 seconds+=abs(prev.wavelength - m.wavelength)/2.5 #Motor does ~2.5nm/s
             seconds+= m.integrationtime * m.average
-            prev = m
+            if not isinstance(prev,WaitTimer):
+                prev = m
         return timedelta(seconds = int(seconds))
 
     def updateEstimatedTimeLabel(self):
@@ -358,7 +367,7 @@ class Ui(QtWidgets.QMainWindow):
         self.currentPort = self.ports[self.comPortBox.currentIndex()]
         try:
             self.motorControl = MotorControl(self,self.currentPort,self.estimatedGrating)
-            self.connectArduButton.setText("connected")
+            self.connectArduButton.setText("Connected")
         except Exception as e:
             QMessageBox.critical(self,"failed intitializing:",str(e))
 
@@ -409,7 +418,7 @@ class Ui(QtWidgets.QMainWindow):
     def onShowWavelengthChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.wavelength = value
-            self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement.wavelength}nm")
+            self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
         self.updateEstimatedTimeLabel()
 
     def onShowAverageChanged(self,value):
@@ -420,6 +429,7 @@ class Ui(QtWidgets.QMainWindow):
     def onShowIntegrationChanged(self,value):
         if self.currentMeasurement:
             self.currentMeasurement.integrationtime = value
+        self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
         self.updateEstimatedTimeLabel()
     
     def onSelectedResultsChanged(self):
@@ -429,7 +439,7 @@ class Ui(QtWidgets.QMainWindow):
         self.selectedResults = [self.completedMeasurements[i.row()] for i in selectedIndices]
         if len(self.selectedResults)==1:
             tmp = self.selectedResults[0]
-            self.resultInfoLabel.setText(tmp.getHeader()+f"\n\nTotal intensity:\t\t\t{tmp.integratedIntensity:.2f}\ndark level:\t\t\t{tmp.darkLevel:.2f}")
+            self.resultInfoLabel.setText(tmp.getInfoText())#tmp.getHeader()+f"\n\nTotal intensity:\t\t\t{tmp.integratedIntensity:.2f}\ndark level:\t\t\t{tmp.darkLevel:.2f}")
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
         self.simplePlotAx.clear()
@@ -439,9 +449,9 @@ class Ui(QtWidgets.QMainWindow):
         self.integratedPlotAx.set_ylabel("Integrated Intensity")
         self.integratedPlotAx.set_xlabel("Wavelength [nm]")
         if self.correctCheckBox.checkState() != 0:
-            tmp = [(m.wavelength,m.correctedIntegratedIntensity if m.darkLevel else m.integratedIntensity) for m in self.selectedResults]
+            tmp = [(m.wavelength,m.correctedIntegratedIntensity if m.darkLevel else m.integratedIntensity) for m in self.selectedResults if not isinstance(m,WaitTimer)]
         else:
-            tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults]
+            tmp = [(m.wavelength,m.integratedIntensity) for m in self.selectedResults if not isinstance(m,WaitTimer)]
         if tmp:
             tmp = np.array(sorted(tmp,key= lambda k:k[0]))
             self.integratedPlotAx.plot(tmp[...,0],tmp[...,1],marker = "o")
@@ -464,8 +474,21 @@ class Ui(QtWidgets.QMainWindow):
         currentRow = self.measurementList.currentRow()
         if len(self.pendingMeasurements) > currentRow >= 0:
             self.currentMeasurement = self.pendingMeasurements[currentRow]
+            if isinstance(self.currentMeasurement,WaitTimer):
+                self.averageShowSpinBox.setEnabled(False)
+                self.wavelengthShowSpinBox.setEnabled(False)
+                self.correctDarkCheckBox.setEnabled(False)
+                self.correctNonlinearCheckBox.setEnabled(False)
+                self.integrationShowSpinBox.setMaximum(86000)
+                self.integrationShowSpinBox.setValue(self.currentMeasurement.integrationtime)
+            else:
+                self.averageShowSpinBox.setEnabled(True)
+                self.wavelengthShowSpinBox.setEnabled(True)
+                self.correctDarkCheckBox.setEnabled(True)
+                self.correctNonlinearCheckBox.setEnabled(True)
+                self.integrationShowSpinBox.setValue(self.currentMeasurement.integrationtime)
+                self.integrationShowSpinBox.setMaximum(60)
             self.averageShowSpinBox.setValue(self.currentMeasurement.average)
-            self.integrationShowSpinBox.setValue(self.currentMeasurement.integrationtime)
             self.wavelengthShowSpinBox.setValue(self.currentMeasurement.wavelength)
             self.correctDarkCheckBox.setCheckState(self.currentMeasurement.correctDarkCounts*2)
             self.correctNonlinearCheckBox.setCheckState(self.currentMeasurement.correctNonlinearity*2)
@@ -546,8 +569,7 @@ class Ui(QtWidgets.QMainWindow):
             if self.abortMeasurement:
                 break
             try:
-                self.motorControl.goToWavelength(cur.wavelength)
-                cur.measure(self.spectrometer,self)
+                cur.measure(self.spectrometer,self.motorControl,self)
             except Exception as e:
                 print("Measurement failed:",e)
             if cur.completed:
