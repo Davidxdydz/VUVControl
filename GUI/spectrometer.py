@@ -161,7 +161,7 @@ class Ui(QtWidgets.QMainWindow):
         self.removeButton.clicked.connect(self.removeMeasurement)
         self.comPortBox.currentIndexChanged.connect(self.onComPortChanged)
         self.browseButton.clicked.connect(self.onSelectFolderClick)
-        self.useSavedCurrentButton.clicked.connect(self.calibrateMotor)
+        self.useSavedCurrentButton.clicked.connect(self.onCalibrateClick)
         self.temperatureSpinBox.valueChanged.connect(self.setTargetTemp)
         self.saveMeasurementButton.clicked.connect(self.saveCurrentMeasurement)
         self.savePlotButton.clicked.connect(self.saveCurrentPlot)
@@ -220,7 +220,7 @@ class Ui(QtWidgets.QMainWindow):
             except Exception as e:
                 print(e)
 
-    def calibrateMotor(self):
+    def onCalibrateClick(self):
         """invokes motor calibration if motor is connected
         """
         if self.motorControl == None:
@@ -239,15 +239,9 @@ class Ui(QtWidgets.QMainWindow):
         self.addPending(WaitTimer(n))
 
     def onComPortChanged(self, index):
-        #T TODO: reconnect to new COM Port
+        # TODO: reconnect to new COM Port
         if index >= 0:
             self.currentPort = self.ports[index]
-
-    def refreshComports(self):
-        self.ports = serial.tools.list_ports.comports()
-        self.comPortBox.addItems([port.device for port in self.ports])
-        if motorDummy:
-            self.motorControl = MotorControlDummy(self,self.estimatedGrating,0)
 
     def onSelectFolderClick(self):
         dialog = QFileDialog(self)
@@ -261,12 +255,42 @@ class Ui(QtWidgets.QMainWindow):
         if self.plotTabWidget.currentIndex()==1 and self.redrawIntegratedPlot:
             self.drawIntegratedPlot()
 
+    def onShowElectricDarkChanged(self,value):
+        if self.currentMeasurement:
+            self.currentMeasurement.correctDarkCounts = bool(value)
+
+    def onShowNonlinearityChanged(self,value):
+        if self.currentMeasurement:
+            self.currentMeasurement.correctNonlinearity = bool(value)
+
+    def onShowWavelengthChanged(self,value):
+        if self.currentMeasurement:
+            self.currentMeasurement.wavelength = value
+            self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
+        self.updateEstimatedTimeLabel()
+
+    def onShowAverageChanged(self,value):
+        if self.currentMeasurement:
+            self.currentMeasurement.average = value
+        self.updateEstimatedTimeLabel()
+
+    def onShowIntegrationChanged(self,value):
+        if self.currentMeasurement:
+            self.currentMeasurement.integrationtime = value
+        self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
+        self.updateEstimatedTimeLabel()
+
+    def refreshComports(self):
+        self.ports = serial.tools.list_ports.comports()
+        self.comPortBox.addItems([port.device for port in self.ports])
+        if motorDummy:
+            self.motorControl = MotorControlDummy(self,self.estimatedGrating,0)
+
     def getPending(self):
         pending = []
         for index in range(self.measurementList.count()):
             pending.append(self.measurementList.item(index).data(QtCore.Qt.UserRole))
         return pending
-
 
     def getEstimatedTime(self,currentMeasurement = None):
         """get the time remaining in pending measurements after current measurement
@@ -367,7 +391,6 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementList.addItem(item)
         self.updateEstimatedTimeLabel()
 
-
     def addSingle(self):
         """Adds a single measurement to pending measurements with at values specified in the ui elements
         """
@@ -385,31 +408,6 @@ class Ui(QtWidgets.QMainWindow):
         currentRow= self.measurementList.currentRow()
         if self.currentMeasurement and currentRow >=0:
             self.measurementList.takeItem(currentRow)
-        self.updateEstimatedTimeLabel()
-
-    def onShowElectricDarkChanged(self,value):
-        if self.currentMeasurement:
-            self.currentMeasurement.correctDarkCounts = bool(value)
-
-    def onShowNonlinearityChanged(self,value):
-        if self.currentMeasurement:
-            self.currentMeasurement.correctNonlinearity = bool(value)
-
-    def onShowWavelengthChanged(self,value):
-        if self.currentMeasurement:
-            self.currentMeasurement.wavelength = value
-            self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
-        self.updateEstimatedTimeLabel()
-
-    def onShowAverageChanged(self,value):
-        if self.currentMeasurement:
-            self.currentMeasurement.average = value
-        self.updateEstimatedTimeLabel()
-
-    def onShowIntegrationChanged(self,value):
-        if self.currentMeasurement:
-            self.currentMeasurement.integrationtime = value
-        self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
         self.updateEstimatedTimeLabel()
 
     def drawSimplePlot(self):

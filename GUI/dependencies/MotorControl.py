@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QInputDialog,QSpinBox,QTextBrowser,QApplication
 
 class MotorControl:
     def __init__(self,parent,port,estimatedGrating):
-        """Attempts to connect to port, BLOCKING WITH 250s timeout!
+        """Attempts to connect to port, BLOCKING WITH 10s timeout!
 
             Parameters
             ----------
@@ -13,12 +13,19 @@ class MotorControl:
             port : String
                 the name of the arduino's COMPORT
             estimatedGrating : int
-                last grating number the motor was
+                last grating number the motor was at
         """
-        self.ser = serial.Serial(port.device, timeout=10)
         self.parent = parent
         self.estimatedGrating = estimatedGrating
         self.offset = 0
+        self.port = port
+        self.connect()
+        
+
+    def connect(self):
+        """Attempts to connect to port, BLOCKING WITH 10s timeout! 
+        """
+        self.ser = serial.Serial(self.port.device, timeout=10)
         if self.ser.is_open:
             self.log(f"opened on {self.ser.port}...")
             QApplication.processEvents()
@@ -81,17 +88,19 @@ class MotorControl:
         self.cleanup()
 
 class MotorControlDummy(MotorControl):
-    #A dummy class to test when no motor is available
-    #simulates time delay waiting for response
-    #always returns no error on the motor part
-    #does not simulate connection issues at the moment
+    """A dummy class to test when no motor is available
+    simulates time delay waiting for response
+
+    always returns no error on the motor part
+    does not simulate connection issues at the moment
+    """
     def __init__(self,parent,estimatedGrating,timescale = 1):
         self.log("opened on DUMMYPORT")
         self.timescale = timescale
         self.delay(1)
         self.log("connected and ready!")
         self.is_open = True
-        self.commands = {"caw":(1,"yey")}
+        self.commands = {"caw":(1,"yey"),"gtw":(1,"arrived")}
         self.parent = parent
         self.estimatedGrating = estimatedGrating
         self.offset = 0
