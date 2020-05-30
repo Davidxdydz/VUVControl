@@ -347,10 +347,12 @@ class Ui(QtWidgets.QMainWindow):
     def saveCurrentPlot(self):
         """Saves the plot displayed in the Simple Plot tab
         """
-        # TODO: allow saving integrated plot
         filename = QFileDialog.getSaveFileName(self,"Save","","picture (*.png")[0]
         if filename:
-            self.simplePlotAx.figure.savefig(filename)
+            if self.plotTabWidget.currentIndex()==1:
+                self.integratedPlotAx.figure.savefig(filename)
+            else:
+                self.simplePlotAx.figure.savefig(filename)
 
     def cleanupSpectrometer(self):
         self.abortTempThread = True
