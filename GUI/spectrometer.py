@@ -8,7 +8,7 @@
 #example: python spectrometer.py dbgm dbgs
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QProgressBar, QInputDialog, QCheckBox, QMessageBox,QFileDialog,QLineEdit, QComboBox, QPushButton, QLabel, QTextBrowser, QScrollBar, QApplication,QListWidget,QDoubleSpinBox,QSpinBox,QGroupBox,QVBoxLayout,QTabWidget
+from PyQt5.QtWidgets import QListWidgetItem, QProgressBar, QInputDialog, QCheckBox, QMessageBox,QFileDialog,QLineEdit, QComboBox, QPushButton, QLabel, QTextBrowser, QScrollBar, QApplication,QListWidget,QDoubleSpinBox,QSpinBox,QGroupBox,QVBoxLayout,QTabWidget
 from PyQt5.QtCore import QSettings,pyqtSignal
 import sys
 import os
@@ -71,6 +71,14 @@ motorDummy = False
 spectrometerDummy = False
 
 
+class TestClass:
+    def __init__(self,val):
+        self.val = val
+    def __str__(self):
+        return str(self.val)
+    def __repr__(self):
+        return str(self)
+
 class Ui(QtWidgets.QMainWindow):
 
     # signals
@@ -111,6 +119,7 @@ class Ui(QtWidgets.QMainWindow):
         self.temperatureSpinBox = self.findChild(QDoubleSpinBox,'temperatureSpinBox')
         self.temperatureLabel = self.findChild(QLabel,'temperatureLabel')
         self.offsetSpinBox = self.findChild(QDoubleSpinBox,'offsetSpinBox')
+
         # measurement page
         self.startButton = self.findChild(QPushButton, 'startButton')
         self.addSingleButton = self.findChild(QPushButton,'addSingleButton')
@@ -130,8 +139,8 @@ class Ui(QtWidgets.QMainWindow):
         self.correctDarkCheckBox = self.findChild(QCheckBox,'correctDarkCheckBox')
         self.correctNonlinearCheckBox = self.findChild(QCheckBox,'correctNonlinearCheckBox')
         self.estTimeLabel = self.findChild(QLabel,'estTimeLabel')
-        self.sortCheckBox = self.findChild(QCheckBox,'sortCheckBox')
         self.addTimerButton = self.findChild(QPushButton,'addTimerButton')
+
         # results page
         self.resultsList = self.findChild(QListWidget,'resultsList')
         self.resultInfoLabel = self.findChild(QLabel,'resultInfoLabel')
@@ -158,7 +167,6 @@ class Ui(QtWidgets.QMainWindow):
         self.currentDevice = None
         self.motorControl = None
         # measurements
-        self.pendingMeasurements = []
         self.completedMeasurements = []
         self.currentMeasurement = None
         self.measurementCount = 0
@@ -204,10 +212,9 @@ class Ui(QtWidgets.QMainWindow):
         self.correctDarkCheckBox.stateChanged.connect(self.onShowElectricDarkChanged)
         self.correctNonlinearCheckBox.stateChanged.connect(self.onShowNonlinearityChanged)
         self.correctCheckBox.stateChanged.connect(self.onSelectedResultsChanged)
-        self.sortCheckBox.stateChanged.connect(self.sortPending)
         self.addTimerButton.clicked.connect(self.onAddTimerClick)
         self.plotTabWidget.currentChanged.connect(self.onCurrentPlotTabChanged)
-        
+
         # threadsafe ui updates
         self.measurementComplete.connect(self.onMeasurementComplete)
         self.allMeasurementsComplete.connect(self.onAllMeasurementsComplete)
@@ -291,6 +298,14 @@ class Ui(QtWidgets.QMainWindow):
             self.drawSimplePlot()
         if self.plotTabWidget.currentIndex()==1 and self.redrawIntegratedPlot:
             self.drawIntegratedPlot()
+
+    def getPending(self):
+        pending = []
+        for index in range(self.measurementList.count()):
+            pending.append(self.measurementList.item(index).data(QtCore.Qt.UserRole))
+        return pending
+
+
     def getEstimatedTime(self,currentMeasurement = None):
         """get the time remaining in pending measurements after current measurement
 
@@ -303,13 +318,14 @@ class Ui(QtWidgets.QMainWindow):
             -------
             datetime.timedelta with remaining time
         """
-        if currentMeasurement == None and self.pendingMeasurements:
-            currentMeasurement = self.pendingMeasurements[0]
-        if currentMeasurement not in self.pendingMeasurements:
+        pendingMeasurements = self.getPending()
+        if currentMeasurement == None and pendingMeasurements:
+            currentMeasurement = pendingMeasurements[0]
+        if currentMeasurement not in pendingMeasurements:
             return timedelta()
         seconds = 0
         prev = None
-        for m in self.pendingMeasurements[self.pendingMeasurements.index(currentMeasurement):]:
+        for m in pendingMeasurements[pendingMeasurements.index(currentMeasurement):]:
             if prev != None:
                 seconds+=abs(prev.wavelength - m.wavelength)/2.5 #Motor does ~2.5nm/s
             seconds+= m.integrationtime * m.average
@@ -381,21 +397,12 @@ class Ui(QtWidgets.QMainWindow):
             self.motorControl = MotorControl(self,self.currentPort,self.estimatedGrating)
             self.connectArduButton.setText("Connected")
         except Exception as e:
-            QMessageBox.critical(self,"failed intitializing:",str(e))
-
-    def sortPending(self):
-        """Sorts the pending measurements by wavelength
-        """
-        self.pendingMeasurements.sort(key=lambda x:x.wavelength)
-        self.measurementList.clear()
-        self.measurementList.addItems([str(m) for m in self.pendingMeasurements])
-        
+            QMessageBox.critical(self,"failed intitializing:",str(e))        
 
     def addPending(self,measurement):
-        self.pendingMeasurements.append(measurement)
-        self.measurementList.addItem(str(measurement))
-        if self.sortCheckBox.checkState() != 0:
-            self.sortPending()
+        item = QListWidgetItem(str(measurement))
+        item.setData(QtCore.Qt.UserRole,measurement)
+        self.measurementList.addItem(item)
         self.updateEstimatedTimeLabel()
 
 
@@ -416,7 +423,6 @@ class Ui(QtWidgets.QMainWindow):
         currentRow= self.measurementList.currentRow()
         if self.currentMeasurement and currentRow >=0:
             self.measurementList.takeItem(currentRow)
-            self.pendingMeasurements.pop(currentRow)
         self.updateEstimatedTimeLabel()
 
     def onShowElectricDarkChanged(self,value):
@@ -443,17 +449,19 @@ class Ui(QtWidgets.QMainWindow):
             self.currentMeasurement.integrationtime = value
         self.measurementList.item(self.measurementList.currentRow()).setText(f"{self.currentMeasurement}")
         self.updateEstimatedTimeLabel()
-    
+
     def drawSimplePlot(self):
         self.simplePlotAx.clear()
         self.simplePlotAx.set_ylabel("Intensity")
         self.simplePlotAx.set_xlabel("Wavelength [nm]")
         self.simplePlotAx.grid()
         for m in self.selectedResults:
-                if self.correctCheckBox.checkState()!=0 and m.darkLevel != None:
-                    self.simplePlotAx.plot(m.correctedWavelengths,m.correctedIntensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
-                else:
-                    self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
+            if isinstance(m,WaitTimer):
+                continue
+            if self.correctCheckBox.checkState()!=0 and m.darkLevel != None:
+                self.simplePlotAx.plot(m.correctedWavelengths,m.correctedIntensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
+            else:
+                self.simplePlotAx.plot(m.wavelengths,m.intensities,label=f"{m.wavelength}nm, {m.average}x{m.integrationtime}s")
         if 1<len(self.selectedResults)<15:
             self.simplePlotAx.legend()
         self.simplePlotAx.figure.canvas.draw()
@@ -495,29 +503,30 @@ class Ui(QtWidgets.QMainWindow):
     def onMeasurementChanged(self):
         """sets the ui elements to the values of the selected pending measurement
         """
-        currentRow = self.measurementList.currentRow()
-        if len(self.pendingMeasurements) > currentRow >= 0:
-            self.currentMeasurement = self.pendingMeasurements[currentRow]
-            if isinstance(self.currentMeasurement,WaitTimer):
-                self.averageShowSpinBox.setEnabled(False)
-                self.wavelengthShowSpinBox.setEnabled(False)
-                self.correctDarkCheckBox.setEnabled(False)
-                self.correctNonlinearCheckBox.setEnabled(False)
-                self.integrationShowSpinBox.setMaximum(86000)
-                self.integrationShowSpinBox.setValue(self.currentMeasurement.integrationtime)
-            else:
-                self.averageShowSpinBox.setEnabled(True)
-                self.wavelengthShowSpinBox.setEnabled(True)
-                self.correctDarkCheckBox.setEnabled(True)
-                self.correctNonlinearCheckBox.setEnabled(True)
-                self.integrationShowSpinBox.setValue(self.currentMeasurement.integrationtime)
-                self.integrationShowSpinBox.setMaximum(60)
-            self.averageShowSpinBox.setValue(self.currentMeasurement.average)
-            self.wavelengthShowSpinBox.setValue(self.currentMeasurement.wavelength)
-            self.correctDarkCheckBox.setCheckState(self.currentMeasurement.correctDarkCounts*2)
-            self.correctNonlinearCheckBox.setCheckState(self.currentMeasurement.correctNonlinearity*2)
-        else:
+        currentItem = self.measurementList.currentItem()
+        if currentItem ==None:
             self.currentMeasurement = None
+            return
+        self.currentMeasurement = currentItem.data(QtCore.Qt.UserRole)
+        if isinstance(self.currentMeasurement,WaitTimer):
+            self.averageShowSpinBox.setEnabled(False)
+            self.wavelengthShowSpinBox.setEnabled(False)
+            self.correctDarkCheckBox.setEnabled(False)
+            self.correctNonlinearCheckBox.setEnabled(False)
+            self.integrationShowSpinBox.setMaximum(86000)
+            self.integrationShowSpinBox.setValue(self.currentMeasurement.integrationtime)
+        else:
+            self.averageShowSpinBox.setEnabled(True)
+            self.wavelengthShowSpinBox.setEnabled(True)
+            self.correctDarkCheckBox.setEnabled(True)
+            self.correctNonlinearCheckBox.setEnabled(True)
+            self.integrationShowSpinBox.setValue(self.currentMeasurement.integrationtime)
+            self.integrationShowSpinBox.setMaximum(60)
+        self.averageShowSpinBox.setValue(self.currentMeasurement.average)
+        self.wavelengthShowSpinBox.setValue(self.currentMeasurement.wavelength)
+        self.correctDarkCheckBox.setCheckState(self.currentMeasurement.correctDarkCounts*2)
+        self.correctNonlinearCheckBox.setCheckState(self.currentMeasurement.correctNonlinearity*2)
+
 
     def onMeasurementComplete(self,measurement):
         """gets called when a single measurement completes and saves it if saveCheckBox is checked
@@ -525,7 +534,6 @@ class Ui(QtWidgets.QMainWindow):
         self.measurementList.takeItem(0)
         self.completedMeasurements.append(measurement)
         self.resultsList.addItem(str(measurement))
-        self.pendingMeasurements.remove(measurement)
         self.updateEstimatedTimeLabel()
         if(self.saveCheckBox.checkState()!=0): #save this measurement if autosave checkbox is ticked
             try:
@@ -587,8 +595,8 @@ class Ui(QtWidgets.QMainWindow):
 
             set self.abortMeasurement = True to stop after current measurement completes
         """
-        self.totalTime = self.getEstimatedTime()
-        for cur in self.pendingMeasurements[:]:   # make a copy that doesn't change while running
+        self.totalTime = self.getEstimatedTime() # also updates pending measurements
+        for cur in self.getPending():   # make a copy that doesn't change while running
             self.progressTracker = cur
             if self.abortMeasurement:
                 break
@@ -613,7 +621,7 @@ class Ui(QtWidgets.QMainWindow):
         if self.spectrometer == None and not spectrometerDummy:
             QMessageBox.critical(self,"Can't Start","Spectrometer not connected!")
             return
-        if not self.pendingMeasurements:
+        if self.measurementList.count()<1:
             QMessageBox.information(self,"Can't Start","No measurements configured!")
             return
         self.abortMeasurement = False
@@ -642,7 +650,6 @@ class Ui(QtWidgets.QMainWindow):
         self.settings.setValue("correct",self.correctCheckBox.checkState())
         self.settings.setValue("targetTemp",self.temperatureSpinBox.value())
         self.settings.setValue("offset",self.offsetSpinBox.value())
-        self.settings.setValue("autosort",self.sortCheckBox.checkState())
         if self.motorControl != None:
             self.settings.setValue("grating",self.motorControl.estimatedGrating)
         self.settings.sync()
@@ -663,7 +670,6 @@ class Ui(QtWidgets.QMainWindow):
         self.loadText("filename",self.fileEdit)
         self.loadCheckBox("autosave",self.saveCheckBox)
         self.loadCheckBox("correct",self.correctCheckBox)
-        self.loadCheckBox("autosort",self.sortCheckBox)
         self.estimatedGrating = int(self.settings.value("grating") if self.settings.value("grating") else 0)
 
     def loadFloat(self,name):

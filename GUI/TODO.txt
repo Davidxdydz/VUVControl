@@ -6,7 +6,9 @@ save all button
 restart thread on switch spectrometer
 add movement to first position to est. time
 connect in own thread
+
 known bugs:
+update estimated time after sorting
 temperature does not get set (sometimes)
 
 code:

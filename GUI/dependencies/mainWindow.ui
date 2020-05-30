@@ -163,87 +163,6 @@
             </layout>
            </widget>
           </item>
-          <item row="0" column="1" rowspan="4">
-           <widget class="QGroupBox" name="measurementsGroupBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="title">
-             <string>Measurements</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_7">
-             <property name="spacing">
-              <number>9</number>
-             </property>
-             <property name="leftMargin">
-              <number>5</number>
-             </property>
-             <property name="topMargin">
-              <number>5</number>
-             </property>
-             <property name="rightMargin">
-              <number>5</number>
-             </property>
-             <property name="bottomMargin">
-              <number>5</number>
-             </property>
-             <item>
-              <widget class="QListWidget" name="measurementList">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="dragEnabled">
-                <bool>false</bool>
-               </property>
-               <property name="dragDropMode">
-                <enum>QAbstractItemView::NoDragDrop</enum>
-               </property>
-               <property name="defaultDropAction">
-                <enum>Qt::MoveAction</enum>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="estTimeLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Estimated Time: 0</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="startButton">
-               <property name="text">
-                <string>Start Measurement</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
           <item row="0" column="0" rowspan="4">
            <widget class="QGroupBox" name="addGroupBox">
             <property name="enabled">
@@ -357,6 +276,13 @@
                  </property>
                 </widget>
                </item>
+               <item row="6" column="0">
+                <widget class="QPushButton" name="addTimerButton">
+                 <property name="text">
+                  <string>Add Timer</string>
+                 </property>
+                </widget>
+               </item>
                <item row="1" column="0">
                 <widget class="QLabel" name="label_5">
                  <property name="text">
@@ -404,13 +330,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="7" column="0" colspan="2">
-                <widget class="QCheckBox" name="sortCheckBox">
-                 <property name="text">
-                  <string>Sort by Wavelength</string>
-                 </property>
-                </widget>
-               </item>
                <item row="4" column="1">
                 <widget class="QDoubleSpinBox" name="integrationSpinBox">
                  <property name="minimum">
@@ -424,14 +343,88 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="0">
-                <widget class="QPushButton" name="addTimerButton">
-                 <property name="text">
-                  <string>Add Timer</string>
-                 </property>
-                </widget>
-               </item>
               </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="0" column="1" rowspan="4">
+           <widget class="QGroupBox" name="measurementsGroupBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Measurements</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_7">
+             <property name="spacing">
+              <number>9</number>
+             </property>
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item>
+              <widget class="QListWidget" name="measurementList">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="dragEnabled">
+                <bool>false</bool>
+               </property>
+               <property name="dragDropMode">
+                <enum>QAbstractItemView::DragDrop</enum>
+               </property>
+               <property name="defaultDropAction">
+                <enum>Qt::MoveAction</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="estTimeLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Estimated Time: 0</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="startButton">
+               <property name="text">
+                <string>Start Measurement</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>
@@ -815,7 +808,6 @@
   <tabstop>integrationSpinBox</tabstop>
   <tabstop>addRangeButton</tabstop>
   <tabstop>addSingleButton</tabstop>
-  <tabstop>sortCheckBox</tabstop>
   <tabstop>measurementList</tabstop>
   <tabstop>startButton</tabstop>
   <tabstop>wavelengthShowSpinBox</tabstop>
