@@ -30,7 +30,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_2">
        <property name="sizePolicy">
@@ -475,7 +475,7 @@
              </widget>
             </item>
             <item row="0" column="0" colspan="3">
-             <widget class="QTabWidget" name="tabWidget_2">
+             <widget class="QTabWidget" name="plotTabWidget">
               <property name="currentIndex">
                <number>0</number>
               </property>
@@ -813,7 +813,7 @@
   <tabstop>correctNonlinearCheckBox</tabstop>
   <tabstop>removeButton</tabstop>
   <tabstop>resultsList</tabstop>
-  <tabstop>tabWidget_2</tabstop>
+  <tabstop>plotTabWidget</tabstop>
   <tabstop>correctCheckBox</tabstop>
   <tabstop>saveMeasurementButton</tabstop>
   <tabstop>savePlotButton</tabstop>

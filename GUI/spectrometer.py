@@ -147,6 +147,7 @@ class Ui(QtWidgets.QMainWindow):
         self.savePlotButton = self.findChild(QPushButton,'savePlotButton')
         self.correctCheckBox = self.findChild(QCheckBox,'correctCheckBox')
         self.progressBar = self.findChild(QProgressBar,'progressBar')
+        self.plotTabWidget = self.findChild(QTabWidget,'plotTabWidget')
         # settings
         self.settings = QSettings("TUM", "E15Spectrometer") # don't change company or application name unless you are fine with losing your settings
         # devices and connections
@@ -439,7 +440,8 @@ class Ui(QtWidgets.QMainWindow):
         self.selectedResults = [self.completedMeasurements[i.row()] for i in selectedIndices]
         if len(self.selectedResults)==1:
             tmp = self.selectedResults[0]
-            self.resultInfoLabel.setText(tmp.getInfoText())#tmp.getHeader()+f"\n\nTotal intensity:\t\t\t{tmp.integratedIntensity:.2f}\ndark level:\t\t\t{tmp.darkLevel:.2f}")
+            self.plotTabWidget.setCurrentIndex(0)
+            self.resultInfoLabel.setText(tmp.getInfoText())
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
         self.simplePlotAx.clear()
