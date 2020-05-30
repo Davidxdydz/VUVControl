@@ -470,7 +470,6 @@ class Ui(QtWidgets.QMainWindow):
         self.selectedResults = [self.completedMeasurements[i.row()] for i in selectedIndices]
         if len(self.selectedResults)==1:
             tmp = self.selectedResults[0]
-            self.plotTabWidget.setCurrentIndex(0)
             self.resultInfoLabel.setText(tmp.getInfoText())
         else:
             self.resultInfoLabel.setText("Select a single measurement to display its properties")
