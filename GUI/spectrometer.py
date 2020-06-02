@@ -312,11 +312,13 @@ class Ui(QtWidgets.QMainWindow):
         seconds = 0
         prev = None
         for m in pendingMeasurements[pendingMeasurements.index(currentMeasurement):]:
+            if  isinstance(m,WaitTimer):
+                seconds+=m.integrationtime*m.average
+                continue
             if prev != None:
                 seconds+=abs(prev.wavelength - m.wavelength)/2.5 #Motor does ~2.5nm/s
             seconds+= m.integrationtime * m.average
-            if not isinstance(prev,WaitTimer):
-                prev = m
+            prev = m
         return timedelta(seconds = int(seconds))
 
     def updateEstimatedTimeLabel(self):
