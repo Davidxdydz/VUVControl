@@ -319,7 +319,7 @@ class Ui(QtWidgets.QMainWindow):
                 seconds+=abs(prev.wavelength - m.wavelength)/2.5 #Motor does ~2.5nm/s
             seconds+= m.integrationtime * m.average
             prev = m
-        return timedelta(seconds = int(seconds))
+        return timedelta(seconds = seconds)
 
     def updateEstimatedTimeLabel(self):
         dt = self.getEstimatedTime()
@@ -544,7 +544,7 @@ class Ui(QtWidgets.QMainWindow):
             if cur == None or cur.startTime == None:
                 continue
             remaining = self.getEstimatedTime(cur)-(datetime.now()-cur.startTime)
-            percent = min(max(int(10000-remaining/self.totalTime*10000),0),10000)
+            percent = int(min(max(10000-10000*remaining/self.totalTime,0),10000))
             remaining = timedelta(seconds = int(remaining.seconds))
             self.progressCallback.emit(f"{remaining} remaining, {cur.wavelength}nm: {cur.integrationtime}s {self.currentAverage+1}/{cur.average}",percent)
         else:
