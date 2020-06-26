@@ -170,6 +170,7 @@ class Ui(QtWidgets.QMainWindow):
         self.correctCheckBox.stateChanged.connect(self.onSelectedResultsChanged)
         self.addTimerButton.clicked.connect(self.onAddTimerClick)
         self.plotTabWidget.currentChanged.connect(self.onCurrentPlotTabChanged)
+        self.fromSpinBox.lineEdit().returnPressed.connect(self.addSingle)
 
         # threadsafe ui updates
         self.measurementComplete.connect(self.onMeasurementComplete)
