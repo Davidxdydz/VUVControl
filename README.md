@@ -1,6 +1,8 @@
 # Introduction
 
-This Project aims to provide a program to control a VUV spectrometer, enable automatic measurements and selection of wavelengths via an attached motor
+This Project aims to provide a program to control a VUV spectrometer, enable automatic measurements and selection of wavelengths via an attached motor.
+
+The code here was part of my bachelor's thesis in physics at the E15 chair at the Technical University of Munich. A more up to date copy of this code can be found at the private E15 gitlab.
 
 ## Contents
 
@@ -9,9 +11,13 @@ GUI: Python code to run on the measurement laptop/raspberry and connect to the m
 
 ## State
 
-Runs stable (most of the time)  
+Stable (one known bug with unkown origin might crash the program at setup, while taking measurements over an extended period of time no crashes have occured so far as all critical methods are wrapped in tons of error handling)  
+
 Runs on windows and linux (tested on raspbian buster), and *maybe* on mac  
-At the moment there is a TODO list in every folder as opening issues in a mostly single person project is overcomplicated  
+
+There are a few quality of live improvements to be done, those are tagged as low priority issues at the E15 gitlab.   
+
+The program was tested using an ocean optics (now ocean insight) QE65000 spectrometer
 
 ## Dependencies
 
